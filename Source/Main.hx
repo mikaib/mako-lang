@@ -17,11 +17,11 @@ class Main {
                         kind: EBinop({
                             pos: null,
                             kind: EConst(CFloat("5.0")),
-                            type: MType.TF32
+                            type: MType.make("f32")
                         }, {
                             pos: null,
                             kind: EConst(CIdent("test")),
-                            type: MType.TMono
+                            type: MType.mono()
                         }, MBinop.Mul)
                     }
                 ]),

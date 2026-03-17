@@ -4,14 +4,12 @@ class MType {
 
     private var _concrete: MConcreteType;
 
-    public static var TMono(get, never): MType;
-    private static inline function get_TMono(): MType {
+    public static function mono(): MType {
         return new MType(MConcreteType.createMono());
     }
 
-    public static var TF32(get, never): MType;
-    private static inline function get_TF32(): MType {
-        return new MType(MConcreteType.createConcrete("f32"));
+    public static function make(x: String): MType {
+        return new MType(MConcreteType.createConcrete(x));
     }
 
     private function new(c: MConcreteType) {
