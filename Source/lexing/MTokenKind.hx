@@ -3,6 +3,7 @@ package lexing;
 import core.MConst;
 
 enum MTokenKind {
+    TNone;
     TTokenOperator(op: MTokenOperator);
     TConst(const: MConst);
     TFunc;
@@ -30,8 +31,10 @@ enum MTokenOperator {
     OGreaterThenEqualTo;
     OLessThen;
     OLessThenEqualTo;
-    OPipe;
-    OAnd;
-    OXor;
+    OBitwiseOr;
+    OLogicalOr;
+    OBitwiseAnd;
+    OLogicalAnd;
     ONot;
+    OXor;
 }

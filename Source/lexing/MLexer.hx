@@ -24,25 +24,60 @@ class MLexer {
         return Some(input.charCodeAt(++readPos));
     }
 
-    public static function tokenFromString(input: String, stringToken: String): Option<MToken> {
-        switch (x) {
-            case "<":
-                if (peek(input) == "=") {
-                    return Some({ kind: TTokenOperator(OLessThenEqualTo), pos: null });
-                }
-                return Some({ kind: TTokenOperator(OLessThenEqualTo), pos: null });
-            case ">":
-                if (peek(input) == "=") {
-                    return Some({ kind: TTokenOperator(OGreaterThenEqualTo), pos: null });
-                }
-                return Some({ kind: TTokenOperator(OGreatherThen), pos: null });
-            case "=":
-                if (peek(input) == "=") {
-                    return Some({ kind: TTokenOperator(OGreaterThenEqualTo), pos: null });
-                }
-                return Some({ kind: TTokenOperator(OGreatherThen), pos: null });
+    private function tokenFromString(input: String, stringToken: String): Option<MToken> {
+        var kind: MTokenKind = switch (stringToken) {
+            case "<" if (peek(input) == "="):
+                readPos++;
+                TTokenOperator(OLessThenEqualTo);
+
+            case "<": TTokenOperator(OLessThenEqualTo);
+
+            case ">" if (peek(input) == "="):
+                readPos++;
+                TTokenOperator(OGreaterThenEqualTo);
+
+            case ">": TTokenOperator(OGreatherThen);
+
+            case "=" if (peek(input) == "="):
+                readPos++;
+                TTokenOperator(OEqual);
+
+            case "=": TTokenOperator(OAssign);
+
+            case "!" if (peek(input) == "="):
+                readPos++;
+                TTokenOperator(ONotEaqual);
+
+            case "!": TTokenOperator(ONot);
+
+            case "|" if (peek(input) == "|"):
+                readPos++;
+                TTokenOperator(OLogicalOr);
+
+            case "|": TTokenOperator(OBitwiseOr);
+
+            case "&" if (peek(input) == "&"):
+                readPos++;
+                TTokenOperator(OLogicalAnd);
+
+            case "&": TTokenOperator(OBitwiseAnd);
+
+            case "(": TParantOpen;
+            case ")": TParantClose;
+            case "{": TBracketOpen;
+            case "}": TBracketClose;
+            case ":": TColon;
+            case "?": TQuestion;
+            case ";": TSemiColon;
         }
-        return null;
+
+
+
+        if (kind == TNone) {
+            return None;
+        }
+
+        return Some({ kind: kind, pos: null });
     }
 
     public function lexTokens(input: String): Array<MToken> {
@@ -54,9 +89,9 @@ class MLexer {
             var char: Option<MChar> = readChar(input);
             if (char != None) {
                 currentStringBuf.addChar(char.sure());
-                var token: MToken = MTokenTools.tokenFromString(currentStringBuf.toString());
+                var token: Option<MToken> = tokenFromString(input, currentStringBuf.toString());
                 if (token != None) {
-                    currentTokens.push(token);
+                    currentTokens.push(token.sure());
                     currentStringBuf.new();
                 }
             }
