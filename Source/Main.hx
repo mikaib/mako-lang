@@ -2,6 +2,7 @@ import parsing.MExprList;
 import parsing.MExprKind;
 import core.MConst;
 import core.MBinop;
+import core.MExprTools;
 
 class Main {
 
@@ -24,7 +25,7 @@ class Main {
             }
         ];
 
-        trace(ast);
+        MExprTools.iterate(ast, Sys.println);
     }
 
 }

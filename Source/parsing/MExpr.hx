@@ -11,7 +11,7 @@ class MExpr {
     public var type: MType = MType.TMono;
 
     public function toString() {
-        return 'MExpr(k=${kind}, pos=${pos})';
+        return 'MExpr(k=${kind}, t=${type}, pos=${pos})';
     }
 
 }
