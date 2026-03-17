@@ -8,6 +8,17 @@ import lexing.MTokenKind.MTokenOperator;
 import lexing.MTokenKind.MTokenKeyword;
 import core.MPositionRange;
 
+typedef LexerFlowControl = {
+    flowControl: LexerFlowControlEnum,
+    advanceBy: Int,
+}
+
+enum LexerFlowControlEnum {
+    LReturnSome(kind:MTokenKind);
+    LReturnNone;
+    LAdvance;
+}
+
 class MLexer {
 
     private var readPos: Int = 0;
@@ -56,6 +67,12 @@ class MLexer {
         }
 
         return Some(char);
+    }
+
+    private function advanceChars(input: String, count: Int) {
+        for (i in 0...count) {
+            readChar(input);
+        }
     }
 
     private function isDelimeter(char: MChar): Bool {
@@ -120,7 +137,7 @@ class MLexer {
             var c = stringToken.charAt(i);
             if (c == '\\') {
                 if (i + 1 >= stringToken.length - 1) {
-                    // " hello I'm \"
+                    // "Hello, I'm \"
                     // Is probably not yet fully parsed and should not yet be converted into a CString
                     return None;
                 }
@@ -161,64 +178,81 @@ class MLexer {
         return None;
     }
 
-    private function tokenFromString(input: String, stringToken: String): MOption<MToken> {
-        var kind: MTokenKind = switch (stringToken) {
-            case "<" if (peek(input).isVal("=")):
-                readPos++;
-                TTokenOperator(OLessThenEqualTo);
+    private function intoOperator(stringToken: String, next: MOption<MChar>): LexerFlowControl {
+        switch (stringToken) {
+            case "<" if (next.isVal("=")):
+                return {flowControl: LReturnSome(TTokenOperator(OLessThenEqualTo)), advanceBy: 1};
+            case "<": return {flowControl: LReturnSome(TTokenOperator(OLessThen)), advanceBy: 0};
 
-            case "<": TTokenOperator(OLessThenEqualTo);
+            case ">" if (next.isVal("=")):
+                return {flowControl: LReturnSome(TTokenOperator(OGreaterThenEqualTo)), advanceBy: 1};
+            case ">": return {flowControl: LReturnSome(TTokenOperator(OGreatherThen)), advanceBy: 0};
 
-            case ">" if (peek(input).isVal("=")):
-                readPos++;
-                TTokenOperator(OGreaterThenEqualTo);
+            case "=" if (next.isVal("=")):
+                return {flowControl: LReturnSome(TTokenOperator(OEqual)), advanceBy: 1};
+            case "=": return {flowControl: LReturnSome(TTokenOperator(OAssign)), advanceBy: 0};
 
-            case ">": TTokenOperator(OGreatherThen);
+            case "!" if (next.isVal("=")):
+                return {flowControl: LReturnSome(TTokenOperator(ONotEaqual)), advanceBy: 1};
+            case "!": return {flowControl: LReturnSome(TTokenOperator(ONot)), advanceBy: 0};
 
-            case "=" if (peek(input).isVal("=")):
-                readPos++;
-                TTokenOperator(OEqual);
+            case "|" if (next.isVal("|")):
+                return {flowControl: LReturnSome(TTokenOperator(OLogicalOr)), advanceBy: 1};
+            case "|": return {flowControl: LReturnSome(TTokenOperator(OBitwiseOr)), advanceBy: 0};
 
-            case "=": TTokenOperator(OAssign);
+            case "&" if (next.isVal("&")):
+                return {flowControl: LReturnSome(TTokenOperator(OLogicalAnd)), advanceBy: 1};
+            case "&": return {flowControl: LReturnSome(TTokenOperator(OBitwiseAnd)), advanceBy: 0};
 
-            case "!" if (peek(input).isVal("=")):
-                readPos++;
-                TTokenOperator(ONotEaqual);
+            case "*": return {flowControl: LReturnSome(TTokenOperator(OMultiply)), advanceBy: 0};
+            case "/": return {flowControl: LReturnSome(TTokenOperator(ODivide)), advanceBy: 0};
+            case "+": return {flowControl: LReturnSome(TTokenOperator(OPlus)), advanceBy: 0};
+            case "-": return {flowControl: LReturnSome(TTokenOperator(OMinus)), advanceBy: 0};
 
-            case "!": TTokenOperator(ONot);
-
-            case "|" if (peek(input).isVal("|")):
-                readPos++;
-                TTokenOperator(OLogicalOr);
-
-            case "|": TTokenOperator(OBitwiseOr);
-
-            case "&" if (peek(input).isVal("&")):
-                readPos++;
-                TTokenOperator(OLogicalAnd);
-
-            case "&": TTokenOperator(OBitwiseAnd);
-
-            case "-" if (peek(input).isVal(">")):
-                readPos++;
-                TFuncAssign;
-
-            case "(": TParantOpen;
-            case ")": TParantClose;
-            case "{": TBraceOpen;
-            case "}": TBraceClose;
-            case "[": TBracketOpen;
-            case "]": TBracketClose;
-            case ":": TColon;
-            case "?": TQuestion;
-            case ";": TSemiColon;
-            case ",": TComma;
-            case "*": TTokenOperator(OMultiply);
-            case "/": TTokenOperator(ODivide);
-            case "+": TTokenOperator(OPlus);
-            case "-": TTokenOperator(OMinus);
-            default : TNone;
+            default:
+                return {flowControl: LAdvance, advanceBy: 0};
         }
+    }
+
+    private function intoToken(stringToken: String, next: MOption<MChar>): LexerFlowControl {
+        switch (stringToken) {
+            case "-" if (next.isVal(">")): return {flowControl: LReturnSome(TFuncAssign), advanceBy: 1};
+            case "(": return {flowControl: LReturnSome(TParantOpen), advanceBy: 0};
+            case ")": return {flowControl: LReturnSome(TParantClose), advanceBy: 0};
+            case "{": return {flowControl: LReturnSome(TBraceOpen), advanceBy: 0};
+            case "}": return {flowControl: LReturnSome(TBraceClose), advanceBy: 0};
+            case "[": return {flowControl: LReturnSome(TBracketOpen), advanceBy: 0};
+            case "]": return {flowControl: LReturnSome(TBracketClose), advanceBy: 0};
+            case ":": return {flowControl: LReturnSome(TColon), advanceBy: 0};
+            case "?": return {flowControl: LReturnSome(TQuestion), advanceBy: 0};
+            case ";": return {flowControl: LReturnSome(TSemiColon), advanceBy: 0};
+            case ",": return {flowControl: LReturnSome(TComma), advanceBy: 0};
+            default:
+                return {flowControl: LAdvance, advanceBy: 0};
+        }
+    }
+
+    private function tokenFromString(input: String, stringToken: String): MOption<MToken> {
+        var flowControl;
+        var next = peek(input);
+
+        flowControl = intoOperator(input, next);
+        advanceChars(input, flowControl.advanceBy);
+        switch (flowControl.flowControl) {
+            case LReturnSome(val): return Some(val);
+            case LReturnNone: return None;
+            case LAdvance:
+        }
+
+        flowControl = intoToken(input, next);
+        advanceChars(input, flowControl.advanceBy);
+        switch (flowControl.flowControl) {
+            case LReturnSome(val): return Some(val);
+            case LReturnNone: return None;
+            case LAdvance:
+        }
+
+        var kind: MTokenKind = TNone;
 
         if (kind == TNone && stringToken.charCodeAt(0) == '"'.code) {
             var cString = intoCString(stringToken);
