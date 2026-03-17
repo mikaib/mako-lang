@@ -10,6 +10,18 @@ class MConcreteType {
     public var params: Array<MType> = [];
     public var defined: Bool = false;
 
+    public static function createMono(): MConcreteType {
+        return {};
+    }
+
+    public static function createConcrete(name: String): MConcreteType {
+        var c: MConcreteType = {};
+        c.name = name;
+        c.defined = true;
+
+        return c;
+    }
+
     private function new() {}
 
     public function set(c: MConcreteType) {

@@ -4,9 +4,12 @@ class MType {
 
     private var _concrete: MConcreteType;
 
-    public static var TMono(get, never): MType;
-    public static inline function get_TMono(): MType {
-        return new MType({});
+    public static function mono(): MType {
+        return new MType(MConcreteType.createMono());
+    }
+
+    public static function make(x: String): MType {
+        return new MType(MConcreteType.createConcrete(x));
     }
 
     private function new(c: MConcreteType) {
@@ -19,6 +22,14 @@ class MType {
 
     public function setVal(c: MConcreteType): Void {
         _concrete.set(c);
+    }
+
+    public function isMono(): Bool {
+        return !_concrete.defined;
+    }
+
+    public function concrete(): MConcreteType {
+        return _concrete;
     }
 
     public function toString() {
