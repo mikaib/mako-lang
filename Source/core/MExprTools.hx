@@ -11,8 +11,8 @@ class MExprTools {
 
     private static function _iterateExpr(expr: MExpr, callback: MExpr->Void): Void {
         final invoke = (e: MExpr) -> {
-            callback(e);
             _iterateExpr(e, callback);
+            callback(e);
         };
 
         switch expr.kind {

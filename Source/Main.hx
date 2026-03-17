@@ -3,6 +3,8 @@ import parsing.MExprKind;
 import core.MConst;
 import core.MBinop;
 import core.MExprTools;
+import typing.MTypeSystem;
+import typing.MType;
 
 class Main {
 
@@ -14,10 +16,12 @@ class Main {
                         pos: null,
                         kind: EBinop({
                             pos: null,
-                            kind: EConst(CFloat("5.0"))
+                            kind: EConst(CFloat("5.0")),
+                            type: MType.TF32
                         }, {
                             pos: null,
-                            kind: EConst(CInt("3"))
+                            kind: EConst(CIdent("test")),
+                            type: MType.TMono
                         }, MBinop.Mul)
                     }
                 ]),
@@ -25,7 +29,10 @@ class Main {
             }
         ];
 
-        MExprTools.iterate(ast, Sys.println);
+        var typer = new MTypeSystem(ast);
+        typer.run();
+
+        trace(ast);
     }
 
 }
