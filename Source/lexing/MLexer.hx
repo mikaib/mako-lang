@@ -6,30 +6,56 @@ import core.MOptionKind;
 import core.MConst;
 import lexing.MTokenKind.MTokenOperator;
 import lexing.MTokenKind.MTokenKeyword;
+import core.MPositionRange;
 
 class MLexer {
 
     private var readPos: Int = 0;
     private var _input: String;
 
-    public function new(input: String) {
+    private var _filePath: String;
+    private var currentLineNumber: Int = 1;
+    private var currentCharIndex: Int = 1;
+
+    private var lastTokenLineNumber: Int = 1;
+    private var lastTokenCharIndex: Int = 1;
+
+    public function new(input: String, filePath: String) {
         _input = input;
+        _filePath = filePath;
     }
 
     private function peek(input: String): MOption<MChar> {
-        if (readPos > input.length - 2) {
+        if (readPos > input.length - 1) {
             return None;
         }
 
-        return Some(input.charCodeAt(readPos + 1));
+        return Some(input.charCodeAt(readPos));
+    }
+
+    private function updateCurrentPosition(lineNumber: Int, charIndex: Int) {
+        currentLineNumber = lineNumber;
+        currentCharIndex = charIndex;
+    }
+
+    private function updateLastTokenPosition(lineNumber: Int, charIndex: Int) {
+        lastTokenLineNumber = lineNumber;
+        lastTokenCharIndex = charIndex;
     }
 
     private function readChar(input: String): MOption<MChar> {
-        if (readPos  > input.length - 2) {
+        if (readPos  > input.length - 1) {
             return None;
         }
 
-        return Some(input.charCodeAt(++readPos));
+        var char = input.charCodeAt(readPos++);
+        if (char == '\n'.code) {
+            updateCurrentPosition(currentLineNumber + 1, 1);
+        } else {
+            updateCurrentPosition(currentLineNumber, currentCharIndex + 1);
+        }
+
+        return Some(char);
     }
 
     private function isDelimeter(char: MChar): Bool {
@@ -120,6 +146,9 @@ class MLexer {
     private function intoKeyword(stringToken: String): MOption<MTokenKeyword> {
         switch (stringToken) {
             case "func": return Some(MTokenKeyword.KFunc);
+            case "class": return Some(MTokenKeyword.KClass);
+            case "public": return Some(MTokenKeyword.KPublic);
+            case "private": return Some(MTokenKeyword.KPrivate);
             case "return": return Some(MTokenKeyword.KReturn);
             case "const": return Some(MTokenKeyword.KConst);
             case "var": return Some(MTokenKeyword.KVar);
@@ -240,7 +269,10 @@ class MLexer {
             return None;
         }
 
-        return Some({ kind: kind, pos: null });
+        var position: MPositionRange = { min: {path: _filePath, line: lastTokenLineNumber, column: lastTokenCharIndex}, max: {path: _filePath, line: currentLineNumber, column: currentCharIndex}}
+        updateLastTokenPosition(currentLineNumber, currentCharIndex);
+
+        return Some({ kind: kind, pos: position});
     }
 
     public function lexTokens(): Array<MToken> {
@@ -257,6 +289,7 @@ class MLexer {
 
                 // skip leading spaces
                 if (currentStringBuf.length == 0 && (c == ' '.code || c == '\t'.code || c == '\n'.code || c == '\r'.code)) {
+                    updateLastTokenPosition(currentLineNumber, currentCharIndex);
                     continue;
                 }
 

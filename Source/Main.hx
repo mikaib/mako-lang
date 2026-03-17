@@ -47,7 +47,7 @@ class Main {
             var bool = true;
         ";
 
-        var lexer = new MLexer(code);
+        var lexer = new MLexer(code, "main.hx");
         var tokens = lexer.lexTokens();
         trace(tokens);
     }

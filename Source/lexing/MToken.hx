@@ -9,6 +9,6 @@ class MToken {
     public var pos:  MPositionRange;
 
     public function toString() {
-        return '\nMToken(t=${MTokenUtil.tokenKindToString(kind)}, p=${MPositionRange})';
+        return '\nMToken(t=${MTokenUtil.tokenKindToString(kind)}, p=${pos})';
     }
 }
