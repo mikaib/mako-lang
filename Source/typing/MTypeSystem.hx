@@ -28,8 +28,8 @@ class MTypeSystem {
         });
     }
 
-    public function unifyResult(from: MType, to: MType, bidirectional: Bool): MOption<{ from: MType, to: MType }> {
-        var result: MOptionKind<{ from: MType, to: MType }> = None;
+    public function unifyResult(from: MType, to: MType, bidirectional: Bool): MOption<MTypeResult> {
+        var result: MOptionKind<MTypeResult> = None;
 
         if (from.isMono() && !to.isMono()) {
             result = Some({ from: to, to: to });
