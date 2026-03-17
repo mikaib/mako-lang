@@ -2,10 +2,10 @@ package lexing;
 
 import core.MOption;
 import core.MChar;
-import lexing.MTokenKind.MTokenOperator;
 import core.MOptionKind;
-import lexing.MTokenKind.MTokenKeyword;
 import core.MConst;
+import lexing.MTokenKind.MTokenOperator;
+import lexing.MTokenKind.MTokenKeyword;
 
 class MLexer {
 
@@ -39,54 +39,96 @@ class MLexer {
         return true;
     }
 
+    private function intoCString(stringToken:String): MOption<MConst> {
+        if (stringToken.length < 2) {
+            return None;
+        }
+        if (stringToken.charAt(0) != '"' || stringToken.charAt(stringToken.length - 1) != '"') {
+            return None;
+        }
+
+        var sb = new StringBuf();
+        var i = 1;
+        while (i < stringToken.length - 1) {
+            var c = stringToken.charAt(i);
+            if (c == '\\') {
+                if (i + 1 >= stringToken.length - 1) {
+                    // " hello I'm \"
+                    // Is probably not yet fully parsed and should not yet be converted into a CString
+                    return None;
+                }
+                var next = stringToken.charAt(i + 1);
+                switch (next) {
+                    case '"': sb.add('"');
+                    case '\\': sb.add('\\');
+                    case 'n': sb.add('\n');
+                    case 'r': sb.add('\r');
+                    case 't': sb.add('\t');
+                    default: sb.add(next);
+                }
+                i += 2;
+            } else {
+                sb.add(c);
+                i++;
+            }
+        }
+
+        return Some(CString(sb.toString()));
+    }
+
     private function intoKeyword(stringToken: String): MOption<MTokenKeyword> {
         switch (stringToken) {
             case "const": MTokenKeyword.KConst;
             case "func": MTokenKeyword.KFunc;
             case "var": MTokenKeyword.KVar;
+            case "if": MTokenKeyword.KIf;
+            case "else": MTokenKeyword.KElse;
+            case "while": MTokenKeyword.KWhile;
+            case "do": MTokenKeyword.KDo;
+            case "for": MTokenKeyword.KFor;
         }
         return None;
     }
 
     private function tokenFromString(input: String, stringToken: String): MOption<MToken> {
         var kind: MTokenKind = switch (stringToken) {
-            case "<" if (peek(input) != None && peek(input).unwrap() == "="):
+            case "<" if (peek(input).isVal("=")):
                 readPos++;
                 TTokenOperator(OLessThenEqualTo);
 
             case "<": TTokenOperator(OLessThenEqualTo);
 
-            case ">" if (peek(input) != None && peek(input).unwrap() == "="):
+            case ">" if (peek(input).isVal("=")):
                 readPos++;
                 TTokenOperator(OGreaterThenEqualTo);
 
             case ">": TTokenOperator(OGreatherThen);
 
-            case "=" if (peek(input) != None && peek(input).unwrap() == "="):
+            case "=" if (peek(input).isVal("=")):
                 readPos++;
                 TTokenOperator(OEqual);
 
             case "=": TTokenOperator(OAssign);
 
-            case "!" if (peek(input) != None && peek(input).unwrap() == "="):
+            case "!" if (peek(input).isVal("=")):
                 readPos++;
                 TTokenOperator(ONotEaqual);
 
             case "!": TTokenOperator(ONot);
 
-            case "|" if (peek(input) != None && peek(input).unwrap() == "|"):
+            case "|" if (peek(input).isVal("|")):
                 readPos++;
                 TTokenOperator(OLogicalOr);
 
             case "|": TTokenOperator(OBitwiseOr);
 
-            case "&" if (peek(input) != None && peek(input).unwrap() == "&"):
+            case "&" if (peek(input).isVal("&")):
                 readPos++;
                 TTokenOperator(OLogicalAnd);
 
             case "&": TTokenOperator(OBitwiseAnd);
 
-            case "-" if (peek(input) != None && peek(input).unwrap() == ">"):
+            case "-" if (peek(input).isVal(">")):
                 readPos++;
                 TFuncAssign;
 
@@ -103,10 +145,20 @@ class MLexer {
             default : TNone;
         }
 
+        if (kind == TNone && stringToken.charCodeAt(0) == '"'.code) {
+            var cstring = intoCString(stringToken);
+            if (cstring.hasValue()) {
+                kind = TConst(cstring.unwrap());
+            }
+            else {
+                return None;
+            }
+        }
+
         var next = peek(input);
-        if(kind == TNone && next != None && isDelimeter(next.unwrap())) {
+        if(kind == TNone && next.hasValue() && isDelimeter(next.unwrap())) {
             var keyword = intoKeyword(stringToken);
-            if (keyword != None) {
+            if (keyword.hasValue()) {
                 kind = TKeyword(keyword.unwrap());
             }
             else {
@@ -131,7 +183,7 @@ class MLexer {
 
         do {
             char = readChar(_input);
-            if (char != None) {
+            if (char.hasValue()) {
                 var c = char.unwrap();
 
                 // skip leading spaces
@@ -141,12 +193,12 @@ class MLexer {
 
                 currentStringBuf.addChar(c);
                 var token: MOption<MToken> = tokenFromString(_input, currentStringBuf.toString());
-                if (token != None) {
+                if (token.hasValue()) {
                     currentTokens.push(token.unwrap());
                     currentStringBuf = new StringBuf();
                 }
             }
-        } while (char != None);
+        } while (char.hasValue());
         return currentTokens;
     }
 

@@ -40,6 +40,8 @@ class Main {
             func mul(a: i32, b: i32) -> i32 {
                 return a * b;
             }
+
+            var str = \"Hello there!\\t\\\"whose there\\\"\"
         ";
 
         var lexer = new MLexer(code);

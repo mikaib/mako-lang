@@ -24,6 +24,11 @@ enum MTokenKeyword {
     KFunc;
     KConst;
     KVar;
+    KIf;
+    KElse;
+    KWhile;
+    KDo;
+    KFor;
 }
 
 enum MTokenOperator {
@@ -85,6 +90,11 @@ class MTokenUtil {
             case KFunc: "func";
             case KConst: "const";
             case KVar: "var";
+            case KIf: "if";
+            case KElse: "else";
+            case KWhile: "while";
+            case KDo: "do";
+            case KFor: "for";
             default : "UnhandledKeyword";
         }
     }
