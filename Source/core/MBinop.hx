@@ -1,5 +1,7 @@
 package core;
-class MBinop {
-    public function new() {
-    }
+
+enum MBinop {
+    Add;
+    Sub;
+    Mul;
 }

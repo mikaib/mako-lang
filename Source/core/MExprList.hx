@@ -1,5 +1,3 @@
 package core;
-class MExprList {
-    public function new() {
-    }
-}
+
+typedef MExprList = Array<MExpr>;

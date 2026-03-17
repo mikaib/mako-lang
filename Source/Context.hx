@@ -1,6 +1,6 @@
 package;
 
-class MContext {
+class Context {
     public function new() {
     }
 }

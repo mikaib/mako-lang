@@ -1,5 +1,7 @@
 package core;
-class MExprKind {
-    public function new() {
-    }
+
+enum MExprKind {
+    EBlock(exprs: MExprList);
+    EConst(const: MConst);
+    EBinop(left: MExpr, right: MExpr, op: MBinop);
 }

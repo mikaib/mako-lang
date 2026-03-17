@@ -1,4 +1,4 @@
--cp src
+-cp Source
 -D analyzer-optimize
 -main Main
 --interp
