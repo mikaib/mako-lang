@@ -39,7 +39,48 @@ class MLexer {
         return true;
     }
 
-    private function intoCString(stringToken:String): MOption<MConst> {
+    private function intoCBool(stringToken: String): MOption<MConst> {
+        switch(stringToken) {
+            case "true": return Some(MConst.CBool(true));
+            case "false": return Some(MConst.CBool(false));
+            default: return None;
+        }
+    }
+
+    private function intoCFloat(stringToken: String): MOption<MConst> {
+        var found_dot = false;
+        for (i in 0...stringToken.length) {
+            var c = stringToken.charCodeAt(i);
+            if (c == '.'.code) {
+                if (found_dot) {
+                    return None;
+                }
+                found_dot = true;
+            }
+            else if (c <= '0'.code || c >= '9'.code) {
+                return None;
+            }
+        }
+
+        if (!found_dot) {
+            return None;
+        }
+
+        return Some(MConst.CFloat(stringToken));
+    }
+
+    private function intoCInt(stringToken: String): MOption<MConst> {
+        for (i in 0...stringToken.length) {
+            var c = stringToken.charCodeAt(i);
+            if (c <= '0'.code || c >= '9'.code) {
+                return None;
+            }
+        }
+
+        return Some(MConst.CInt(stringToken));
+    }
+
+    private function intoCString(stringToken: String): MOption<MConst> {
         if (stringToken.length < 2) {
             return None;
         }
@@ -78,14 +119,15 @@ class MLexer {
 
     private function intoKeyword(stringToken: String): MOption<MTokenKeyword> {
         switch (stringToken) {
-            case "const": MTokenKeyword.KConst;
-            case "func": MTokenKeyword.KFunc;
-            case "var": MTokenKeyword.KVar;
-            case "if": MTokenKeyword.KIf;
-            case "else": MTokenKeyword.KElse;
-            case "while": MTokenKeyword.KWhile;
-            case "do": MTokenKeyword.KDo;
-            case "for": MTokenKeyword.KFor;
+            case "func": return Some(MTokenKeyword.KFunc);
+            case "return": return Some(MTokenKeyword.KReturn);
+            case "const": return Some(MTokenKeyword.KConst);
+            case "var": return Some(MTokenKeyword.KVar);
+            case "if": return Some(MTokenKeyword.KIf);
+            case "else": return Some(MTokenKeyword.KElse);
+            case "while": return Some(MTokenKeyword.KWhile);
+            case "do": return Some(MTokenKeyword.KDo);
+            case "for": return Some(MTokenKeyword.KFor);
         }
         return None;
     }
@@ -142,13 +184,17 @@ class MLexer {
             case "?": TQuestion;
             case ";": TSemiColon;
             case ",": TComma;
+            case "*": TTokenOperator(OMultiply);
+            case "/": TTokenOperator(ODivide);
+            case "+": TTokenOperator(OPlus);
+            case "-": TTokenOperator(OMinus);
             default : TNone;
         }
 
         if (kind == TNone && stringToken.charCodeAt(0) == '"'.code) {
-            var cstring = intoCString(stringToken);
-            if (cstring.hasValue()) {
-                kind = TConst(cstring.unwrap());
+            var cString = intoCString(stringToken);
+            if (cString.hasValue()) {
+                kind = TConst(cString.unwrap());
             }
             else {
                 return None;
@@ -156,6 +202,30 @@ class MLexer {
         }
 
         var next = peek(input);
+        if (kind == TNone && next.hasValue() && !next.isVal('.') && isDelimeter(next.unwrap())) {
+            var cInt = intoCInt(stringToken);
+            if (cInt.hasValue()) {
+                kind = TConst(cInt.unwrap());
+            }
+        }
+
+        if (kind == TNone && next.hasValue() && isDelimeter(next.unwrap())) {
+            var cFloat= intoCFloat(stringToken);
+            if (cFloat.hasValue()) {
+                kind = TConst(cFloat.unwrap());
+            }
+            else if (next.isVal('.')) {
+                return None;
+            }
+        }
+
+        if (kind == TNone && next.hasValue() && isDelimeter(next.unwrap())) {
+            var cBool= intoCBool(stringToken);
+            if (cBool.hasValue()) {
+                kind = TConst(cBool.unwrap());
+            }
+        }
+
         if(kind == TNone && next.hasValue() && isDelimeter(next.unwrap())) {
             var keyword = intoKeyword(stringToken);
             if (keyword.hasValue()) {
@@ -165,7 +235,6 @@ class MLexer {
                 kind = TConst(MConst.CIdent(stringToken));
             }
         }
-
 
         if (kind == TNone) {
             return None;

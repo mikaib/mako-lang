@@ -41,7 +41,10 @@ class Main {
                 return a * b;
             }
 
-            var str = \"Hello there!\\t\\\"whose there\\\"\"
+            var str = \"Hello there!\\t\\\"whose there\\\"\";
+            var int = 4;
+            var float = 3.14;
+            var bool = true;
         ";
 
         var lexer = new MLexer(code);

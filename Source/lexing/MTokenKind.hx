@@ -22,6 +22,7 @@ enum MTokenKind {
 
 enum MTokenKeyword {
     KFunc;
+    KReturn;
     KConst;
     KVar;
     KIf;
@@ -88,6 +89,7 @@ class MTokenUtil {
     static function keywordToString(k:MTokenKeyword):String {
         return switch (k) {
             case KFunc: "func";
+            case KReturn: "return";
             case KConst: "const";
             case KVar: "var";
             case KIf: "if";
