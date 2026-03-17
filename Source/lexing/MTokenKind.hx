@@ -3,7 +3,7 @@ package lexing;
 import core.MConst;
 
 enum MTokenKind {
-    MTokenOperator;
+    TTokenOperator(op: MTokenOperator);
     TConst(const: MConst);
     TFunc;
     TParantOpen;
