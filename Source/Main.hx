@@ -1,5 +1,5 @@
-import core.MExprList;
-import core.MExprKind;
+import parsing.MExprList;
+import parsing.MExprKind;
 import core.MConst;
 import core.MBinop;
 

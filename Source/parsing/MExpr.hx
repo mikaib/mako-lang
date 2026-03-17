@@ -8,7 +8,7 @@ class MExpr {
 
     public var kind: MExprKind;
     public var pos:  MPositionRange;
-    public var type: MType = null;
+    public var type: MType = MType.TMono;
 
     public function toString() {
         return 'MExpr(k=${kind}, pos=${pos})';
