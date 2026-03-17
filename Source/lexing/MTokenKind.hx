@@ -25,6 +25,11 @@ enum MTokenOperator {
     OMultiply;
     OAssign;
     OEqual;
+    ONotEaqual;
+    OGreatherThen;
+    OGreaterThenEqualTo;
+    OLessThen;
+    OLessThenEqualTo;
     OPipe;
     OAnd;
     OXor;
