@@ -2,9 +2,9 @@ import parsing.MExprList;
 import parsing.MExprKind;
 import core.MConst;
 import core.MBinop;
-import core.MExprTools;
 import typing.MTypeSystem;
 import typing.MType;
+import lexing.MLexer;
 
 class Main {
 
@@ -32,7 +32,19 @@ class Main {
         var typer = new MTypeSystem(ast);
         typer.run();
 
-        trace(ast);
+        //trace(ast);
+
+        var code = "
+            const x:i32= 0;
+
+            func mul(a: i32, b: i32) -> i32 {
+                return a * b;
+            }
+        ";
+
+        var lexer = new MLexer(code);
+        var tokens = lexer.lexTokens();
+        trace(tokens);
     }
 
 }
