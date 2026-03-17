@@ -10,24 +10,23 @@ enum MTokenKind {
     TParantClose;
     TBracketOpen;
     TBracketClose;
+    TQuestion;
     TColon;
     TSemiColon;
 }
 
 enum MTokenOperator {
     // Unary operators
-    TInrement;
-    TDecrement;
-    TPlus;
-    TMinus;
-    TDivide;
-    TMultiply;
-    TAssign;
-    TEqual;
-
-    // Binary operators
-    TBinOR;
-    TBinXOR;
-    TBinAND;
-    TBinNOT;
+    OIncrement;
+    ODecrement;
+    OPlus;
+    OMinus;
+    ODivide;
+    OMultiply;
+    OAssign;
+    OEqual;
+    OPipe;
+    OAnd;
+    OXor;
+    ONot;
 }
