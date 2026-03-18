@@ -82,53 +82,72 @@ class MLexer {
         return true;
     }
 
-    private function intoCBool(stringToken: String): MOption<MConst> {
+    private function intoCIdent(stringToken: String, next: MOption<MChar>): LexerFlowControl {
+        if (next.hasValue() && next.unwrap().isAlphaNumeric()) {
+            return {flowControl: LReturnNone, advanceBy: 0};
+        }
+        return {flowControl: LReturnSome(TConst(MConst.CIdent(stringToken))), advanceBy: 0};
+    }
+
+    private function intoCBool(stringToken: String, next: MOption<MChar>): LexerFlowControl {
+        if (next.hasValue() && next.unwrap().isAlphaNumeric()) {
+            return {flowControl: LReturnNone, advanceBy: 0};
+        }
         switch(stringToken) {
-            case "true": return Some(MConst.CBool(true));
-            case "false": return Some(MConst.CBool(false));
-            default: return None;
+            case "true": return {flowControl: LReturnSome(TConst(CBool(true))), advanceBy: 0};
+            case "false": return {flowControl: LReturnSome(TConst(CBool(false))), advanceBy: 0};
+            default: return {flowControl: LAdvance, advanceBy: 0};
         }
     }
 
-    private function intoCFloat(stringToken: String): MOption<MConst> {
+    private function intoCFloat(stringToken: String, next: MOption<MChar>): LexerFlowControl {
+        if (next.hasValue() && !isDelimeter(next.unwrap())) {
+            return {flowControl: LReturnNone, advanceBy: 0};
+        }
         var found_dot = false;
         for (i in 0...stringToken.length) {
             var c = stringToken.charCodeAt(i);
             if (c == '.'.code) {
                 if (found_dot) {
-                    return None;
+                    return {flowControl: LAdvance, advanceBy: 0};
                 }
                 found_dot = true;
             }
             else if (c <= '0'.code || c >= '9'.code) {
-                return None;
+                return {flowControl: LAdvance, advanceBy: 0};
             }
         }
 
         if (!found_dot) {
-            return None;
+            return {flowControl: LAdvance, advanceBy: 0};
         }
 
-        return Some(MConst.CFloat(stringToken));
+        return {flowControl: LReturnSome(TConst(CFloat(stringToken))), advanceBy: 0};
     }
 
-    private function intoCInt(stringToken: String): MOption<MConst> {
+    private function intoCInt(stringToken: String, next: MOption<MChar>): LexerFlowControl {
+        if (next.hasValue() && (next.isVal('.'.code) || !isDelimeter(next.unwrap()))) {
+            return {flowControl: LReturnNone, advanceBy: 0};
+        }
         for (i in 0...stringToken.length) {
             var c = stringToken.charCodeAt(i);
-            if (c <= '0'.code || c >= '9'.code) {
-                return None;
+            if (c < '0'.code || c > '9'.code) {
+                return {flowControl: LAdvance, advanceBy: 0};
             }
         }
 
-        return Some(MConst.CInt(stringToken));
+        return {flowControl: LReturnSome(TConst(CInt(stringToken))), advanceBy: 0};
     }
 
-    private function intoCString(stringToken: String): MOption<MConst> {
-        if (stringToken.length < 2) {
-            return None;
+    private function intoCString(stringToken: String): LexerFlowControl {
+        if (stringToken.charCodeAt(0) != '"'.code) {
+            return {flowControl: LAdvance, advanceBy: 0};
         }
-        if (stringToken.charAt(0) != '"' || stringToken.charAt(stringToken.length - 1) != '"') {
-            return None;
+        if (stringToken.length < 2) {
+            return {flowControl: LReturnNone, advanceBy: 0};
+        }
+        if (stringToken.charAt(stringToken.length - 1) != '"') {
+            return {flowControl: LReturnNone, advanceBy: 0};
         }
 
         var sb = new StringBuf();
@@ -139,7 +158,7 @@ class MLexer {
                 if (i + 1 >= stringToken.length - 1) {
                     // "Hello, I'm \"
                     // Is probably not yet fully parsed and should not yet be converted into a CString
-                    return None;
+                    return {flowControl: LReturnNone, advanceBy: 0};
                 }
                 var next = stringToken.charAt(i + 1);
                 switch (next) {
@@ -157,25 +176,28 @@ class MLexer {
             }
         }
 
-        return Some(CString(sb.toString()));
+        return {flowControl: LReturnSome(TConst(CString(sb.toString()))), advanceBy: 0};
     }
 
-    private function intoKeyword(stringToken: String): MOption<MTokenKeyword> {
-        switch (stringToken) {
-            case "func": return Some(MTokenKeyword.KFunc);
-            case "class": return Some(MTokenKeyword.KClass);
-            case "public": return Some(MTokenKeyword.KPublic);
-            case "private": return Some(MTokenKeyword.KPrivate);
-            case "return": return Some(MTokenKeyword.KReturn);
-            case "const": return Some(MTokenKeyword.KConst);
-            case "var": return Some(MTokenKeyword.KVar);
-            case "if": return Some(MTokenKeyword.KIf);
-            case "else": return Some(MTokenKeyword.KElse);
-            case "while": return Some(MTokenKeyword.KWhile);
-            case "do": return Some(MTokenKeyword.KDo);
-            case "for": return Some(MTokenKeyword.KFor);
+    private function intoKeyword(stringToken: String, next: MOption<MChar>): LexerFlowControl {
+        if (next.hasValue() && next.unwrap().isAlphaNumeric()) {
+            return {flowControl: LReturnNone, advanceBy: 0};
         }
-        return None;
+        switch (stringToken) {
+            case "func": return {flowControl: LReturnSome(TKeyword(MTokenKeyword.KFunc)), advanceBy: 0};
+            case "class": return {flowControl: LReturnSome(TKeyword(MTokenKeyword.KClass)), advanceBy: 0};
+            case "public": return {flowControl: LReturnSome(TKeyword(MTokenKeyword.KPublic)), advanceBy: 0};
+            case "private": return {flowControl: LReturnSome(TKeyword(MTokenKeyword.KPrivate)), advanceBy: 0};
+            case "return": return {flowControl: LReturnSome(TKeyword(MTokenKeyword.KReturn)), advanceBy: 0};
+            case "const": return {flowControl: LReturnSome(TKeyword(MTokenKeyword.KConst)), advanceBy: 0};
+            case "var": return {flowControl: LReturnSome(TKeyword(MTokenKeyword.KVar)), advanceBy: 0};
+            case "if": return {flowControl: LReturnSome(TKeyword(MTokenKeyword.KIf)), advanceBy: 0};
+            case "else": return {flowControl: LReturnSome(TKeyword(MTokenKeyword.KElse)), advanceBy: 0};
+            case "while": return {flowControl: LReturnSome(TKeyword(MTokenKeyword.KWhile)), advanceBy: 0};
+            case "do": return {flowControl: LReturnSome(TKeyword(MTokenKeyword.KDo)), advanceBy: 0};
+            case "for": return {flowControl: LReturnSome(TKeyword(MTokenKeyword.KFor)), advanceBy: 0};
+        }
+        return {flowControl: LAdvance, advanceBy: 0};
     }
 
     private function intoOperator(stringToken: String, next: MOption<MChar>): LexerFlowControl {
@@ -232,11 +254,11 @@ class MLexer {
         }
     }
 
-    private function tokenFromString(input: String, stringToken: String): MOption<MToken> {
+    private function tokenKindFromString(input: String, stringToken: String): MOption<MTokenKind> {
         var flowControl;
         var next = peek(input);
 
-        flowControl = intoOperator(input, next);
+        flowControl = intoToken(stringToken, next);
         advanceChars(input, flowControl.advanceBy);
         switch (flowControl.flowControl) {
             case LReturnSome(val): return Some(val);
@@ -244,7 +266,7 @@ class MLexer {
             case LAdvance:
         }
 
-        flowControl = intoToken(input, next);
+        flowControl = intoOperator(stringToken, next);
         advanceChars(input, flowControl.advanceBy);
         switch (flowControl.flowControl) {
             case LReturnSome(val): return Some(val);
@@ -252,61 +274,66 @@ class MLexer {
             case LAdvance:
         }
 
-        var kind: MTokenKind = TNone;
-
-        if (kind == TNone && stringToken.charCodeAt(0) == '"'.code) {
-            var cString = intoCString(stringToken);
-            if (cString.hasValue()) {
-                kind = TConst(cString.unwrap());
-            }
-            else {
-                return None;
-            }
+        flowControl = intoCString(stringToken);
+        advanceChars(input, flowControl.advanceBy);
+        switch (flowControl.flowControl) {
+            case LReturnSome(val): return Some(val);
+            case LReturnNone: return None;
+            case LAdvance:
         }
 
-        var next = peek(input);
-        if (kind == TNone && next.hasValue() && !next.isVal('.') && isDelimeter(next.unwrap())) {
-            var cInt = intoCInt(stringToken);
-            if (cInt.hasValue()) {
-                kind = TConst(cInt.unwrap());
-            }
+        flowControl = intoCInt(stringToken, next);
+        advanceChars(input, flowControl.advanceBy);
+        switch (flowControl.flowControl) {
+            case LReturnSome(val): return Some(val);
+            case LReturnNone: return None;
+            case LAdvance:
         }
 
-        if (kind == TNone && next.hasValue() && isDelimeter(next.unwrap())) {
-            var cFloat= intoCFloat(stringToken);
-            if (cFloat.hasValue()) {
-                kind = TConst(cFloat.unwrap());
-            }
-            else if (next.isVal('.')) {
-                return None;
-            }
+        flowControl = intoCFloat(stringToken, next);
+        advanceChars(input, flowControl.advanceBy);
+        switch (flowControl.flowControl) {
+            case LReturnSome(val): return Some(val);
+            case LReturnNone: return None;
+            case LAdvance:
         }
 
-        if (kind == TNone && next.hasValue() && isDelimeter(next.unwrap())) {
-            var cBool= intoCBool(stringToken);
-            if (cBool.hasValue()) {
-                kind = TConst(cBool.unwrap());
-            }
+        flowControl = intoCBool(stringToken, next);
+        advanceChars(input, flowControl.advanceBy);
+        switch (flowControl.flowControl) {
+            case LReturnSome(val): return Some(val);
+            case LReturnNone: return None;
+            case LAdvance:
         }
 
-        if(kind == TNone && next.hasValue() && isDelimeter(next.unwrap())) {
-            var keyword = intoKeyword(stringToken);
-            if (keyword.hasValue()) {
-                kind = TKeyword(keyword.unwrap());
-            }
-            else {
-                kind = TConst(MConst.CIdent(stringToken));
-            }
+        flowControl = intoKeyword(stringToken, next);
+        advanceChars(input, flowControl.advanceBy);
+        switch (flowControl.flowControl) {
+            case LReturnSome(val): return Some(val);
+            case LReturnNone: return None;
+            case LAdvance:
         }
 
-        if (kind == TNone) {
+        flowControl = intoCIdent(stringToken, next);
+        advanceChars(input, flowControl.advanceBy);
+        switch (flowControl.flowControl) {
+            case LReturnSome(val): return Some(val);
+            case LReturnNone: return None;
+            case LAdvance:
+        }
+
+        return None;
+    }
+
+    private function tokenFromString(input: String, stringToken: String): MOption<MToken> {
+        var tokenKind = tokenKindFromString(input, stringToken);
+        if (!tokenKind.hasValue()) {
             return None;
         }
-
         var position: MPositionRange = { min: {path: _filePath, line: lastTokenLineNumber, column: lastTokenCharIndex}, max: {path: _filePath, line: currentLineNumber, column: currentCharIndex}}
         updateLastTokenPosition(currentLineNumber, currentCharIndex);
 
-        return Some({ kind: kind, pos: position});
+        return Some({ kind: tokenKind.unwrap(), pos: position});
     }
 
     public function lexTokens(): Array<MToken> {
