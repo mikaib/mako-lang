@@ -202,14 +202,26 @@ class MLexer {
         return {flowControl: LAdvance, advanceBy: 0};
     }
 
+    OAddAssign: "+=";
+    case OSubtractAssign: "-=";
+    case OMultiplyAssign: "*=";
+    case ODivideAssign: "/=";
+    case OOrAssign: "|=";
+    case OAndAssign: "&=";
+    case OXorAssign: "^=";
+
     private function intoOperator(stringToken: String, next: MOption<MChar>): LexerFlowControl {
         switch (stringToken) {
             case "<" if (next.isValue("=")):
                 return {flowControl: LReturnSome(TTokenOperator(OLessThenEqualTo)), advanceBy: 1};
+            case "<" if (next.isValue("<")):
+                return {flowControl: LReturnSome(TTokenOperator(ORotateLeft)), advanceBy: 1};
             case "<": return {flowControl: LReturnSome(TTokenOperator(OLessThen)), advanceBy: 0};
 
             case ">" if (next.isValue("=")):
                 return {flowControl: LReturnSome(TTokenOperator(OGreaterThenEqualTo)), advanceBy: 1};
+            case ">" if (next.isValue(">")):
+                return {flowControl: LReturnSome(TTokenOperator(ORotateRight)), advanceBy: 1};
             case ">": return {flowControl: LReturnSome(TTokenOperator(OGreatherThen)), advanceBy: 0};
 
             case "=" if (next.isValue("=")):
@@ -222,15 +234,34 @@ class MLexer {
 
             case "|" if (next.isValue("|")):
                 return {flowControl: LReturnSome(TTokenOperator(OLogicalOr)), advanceBy: 1};
+            case "|" if (next.isValue("=")):
+                return {flowControl: LReturnSome(TTokenOperator(OOrAssign)), advanceBy: 1};
             case "|": return {flowControl: LReturnSome(TTokenOperator(OBitwiseOr)), advanceBy: 0};
+
+            case "^" if (next.isValue("=")):
+                return {flowControl: LReturnSome(TTokenOperator(OXorAssign)), advanceBy: 1};
+            case "^": return {flowControl: LReturnSome(TTokenOperator(OBitwiseXor)), advanceBy: 0};
 
             case "&" if (next.isValue("&")):
                 return {flowControl: LReturnSome(TTokenOperator(OLogicalAnd)), advanceBy: 1};
+            case "&" if (next.isValue("=")):
+                return {flowControl: LReturnSome(TTokenOperator(OAndAssign)), advanceBy: 1};
             case "&": return {flowControl: LReturnSome(TTokenOperator(OBitwiseAnd)), advanceBy: 0};
 
+            case "*" if (next.isValue("=")):
+                return {flowControl: LReturnSome(TTokenOperator(OMultiplyAssign)), advanceBy: 0};
             case "*": return {flowControl: LReturnSome(TTokenOperator(OMultiply)), advanceBy: 0};
+
+            case "/" if (next.isValue("=")):
+                return {flowControl: LReturnSome(TTokenOperator(ODivideAssign)), advanceBy: 0};
             case "/": return {flowControl: LReturnSome(TTokenOperator(ODivide)), advanceBy: 0};
+
+            case "+" if (next.isValue("=")):
+                return {flowControl: LReturnSome(TTokenOperator(OAddAssign)), advanceBy: 0};
             case "+": return {flowControl: LReturnSome(TTokenOperator(OPlus)), advanceBy: 0};
+
+            case "-" if (next.isValue("=")):
+                return {flowControl: LReturnSome(TTokenOperator(OSubtractAssign)), advanceBy: 0};
             case "-": return {flowControl: LReturnSome(TTokenOperator(OMinus)), advanceBy: 0};
 
             default:

@@ -49,12 +49,22 @@ enum MTokenOperator {
     OGreaterThenEqualTo;
     OLessThen;
     OLessThenEqualTo;
+    ORotateLeft;
+    ORotateRight;
     OBitwiseOr;
     OLogicalOr;
     OBitwiseAnd;
     OLogicalAnd;
+    OBitwiseXor;
     ONot;
     OXor;
+    OAddAssign;
+    OSubtractAssign;
+    OMultiplyAssign;
+    ODivideAssign;
+    OOrAssign;
+    OAndAssign;
+    OXorAssign;
 }
 
 class MTokenUtil {
@@ -122,12 +132,22 @@ class MTokenUtil {
             case OGreaterThenEqualTo: ">=";
             case OLessThen: "<";
             case OLessThenEqualTo: "<=";
+            case ORotateLeft: "<<";
+            case ORotateRight: ">>";
             case OBitwiseOr: "|";
             case OLogicalOr: "||";
             case OBitwiseAnd: "&";
             case OLogicalAnd: "&&";
+            case OBitwiseXor: "^";
             case ONot: "!";
             case OXor: "^";
+            case OAddAssign: "+=";
+            case OSubtractAssign: "-=";
+            case OMultiplyAssign: "*=";
+            case ODivideAssign: "/=";
+            case OOrAssign: "|=";
+            case OAndAssign: "&=";
+            case OXorAssign: "^=";
             default : "UnhandledOperator";
         }
     }
