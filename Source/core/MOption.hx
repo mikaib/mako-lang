@@ -13,7 +13,7 @@ abstract MOption<T>(MOptionKind<T>) from MOptionKind<T> to MOptionKind<T> {
         return this != None;
     }
 
-    public function isVal(t: T): Bool {
+    public function isValue(t: T): Bool {
         return switch this {
             case Some(r): r == t;
             case None: false;

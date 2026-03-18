@@ -128,7 +128,7 @@ class MLexer {
     }
 
     private function intoCInt(stringToken: String, next: MOption<MChar>): LexerFlowControl {
-        if (next.hasValue() && (next.isVal('.'.code) || !isDelimeter(next.unwrap()))) {
+        if (next.hasValue() && (next.isValue('.'.code) || !isDelimeter(next.unwrap()))) {
             return {flowControl: LReturnNone, advanceBy: 0};
         }
         for (i in 0...stringToken.length) {
@@ -204,27 +204,27 @@ class MLexer {
 
     private function intoOperator(stringToken: String, next: MOption<MChar>): LexerFlowControl {
         switch (stringToken) {
-            case "<" if (next.isVal("=")):
+            case "<" if (next.isValue("=")):
                 return {flowControl: LReturnSome(TTokenOperator(OLessThenEqualTo)), advanceBy: 1};
             case "<": return {flowControl: LReturnSome(TTokenOperator(OLessThen)), advanceBy: 0};
 
-            case ">" if (next.isVal("=")):
+            case ">" if (next.isValue("=")):
                 return {flowControl: LReturnSome(TTokenOperator(OGreaterThenEqualTo)), advanceBy: 1};
             case ">": return {flowControl: LReturnSome(TTokenOperator(OGreatherThen)), advanceBy: 0};
 
-            case "=" if (next.isVal("=")):
+            case "=" if (next.isValue("=")):
                 return {flowControl: LReturnSome(TTokenOperator(OEqual)), advanceBy: 1};
             case "=": return {flowControl: LReturnSome(TTokenOperator(OAssign)), advanceBy: 0};
 
-            case "!" if (next.isVal("=")):
+            case "!" if (next.isValue("=")):
                 return {flowControl: LReturnSome(TTokenOperator(ONotEaqual)), advanceBy: 1};
             case "!": return {flowControl: LReturnSome(TTokenOperator(ONot)), advanceBy: 0};
 
-            case "|" if (next.isVal("|")):
+            case "|" if (next.isValue("|")):
                 return {flowControl: LReturnSome(TTokenOperator(OLogicalOr)), advanceBy: 1};
             case "|": return {flowControl: LReturnSome(TTokenOperator(OBitwiseOr)), advanceBy: 0};
 
-            case "&" if (next.isVal("&")):
+            case "&" if (next.isValue("&")):
                 return {flowControl: LReturnSome(TTokenOperator(OLogicalAnd)), advanceBy: 1};
             case "&": return {flowControl: LReturnSome(TTokenOperator(OBitwiseAnd)), advanceBy: 0};
 
@@ -240,7 +240,7 @@ class MLexer {
 
     private function intoToken(stringToken: String, next: MOption<MChar>): LexerFlowControl {
         switch (stringToken) {
-            case "-" if (next.isVal(">")): return {flowControl: LReturnSome(TFuncAssign), advanceBy: 1};
+            case "-" if (next.isValue(">")): return {flowControl: LReturnSome(TFuncAssign), advanceBy: 1};
             case "(": return {flowControl: LReturnSome(TParantOpen), advanceBy: 0};
             case ")": return {flowControl: LReturnSome(TParantClose), advanceBy: 0};
             case "{": return {flowControl: LReturnSome(TBraceOpen), advanceBy: 0};
