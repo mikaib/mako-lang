@@ -8,6 +8,8 @@ import lexing.MTokenKind.MTokenOperator;
 import lexing.MTokenKind.MTokenKeyword;
 import core.MPositionRange;
 
+typedef MControlFunc = (String, MOption<MChar>) -> LexerFlowControl;
+
 typedef LexerFlowControl = {
     flowControl: LexerFlowControlEnum,
     advanceBy: Int,
@@ -139,7 +141,7 @@ class MLexer {
         return {flowControl: LReturnSome(TConst(CInt(stringToken))), advanceBy: 0};
     }
 
-    private function intoCString(stringToken: String): LexerFlowControl {
+    private function intoCString(stringToken: String, _: MOption<MChar>): LexerFlowControl {
         if (stringToken.charCodeAt(0) != '"'.code) {
             return {flowControl: LAdvance, advanceBy: 0};
         }
@@ -255,71 +257,28 @@ class MLexer {
     }
 
     private function tokenKindFromString(input: String, stringToken: String): MOption<MTokenKind> {
-        var flowControl;
         var next = peek(input);
 
-        flowControl = intoToken(stringToken, next);
-        advanceChars(input, flowControl.advanceBy);
-        switch (flowControl.flowControl) {
-            case LReturnSome(val): return Some(val);
-            case LReturnNone: return None;
-            case LAdvance:
-        }
+        var controlList: Array<MControlFunc> = [
+            intoToken,
+            intoOperator,
+            intoCString,
+            intoCInt,
+            intoCFloat,
+            intoCBool,
+            intoKeyword,
+            intoCIdent
+        ];
 
-        flowControl = intoOperator(stringToken, next);
-        advanceChars(input, flowControl.advanceBy);
-        switch (flowControl.flowControl) {
-            case LReturnSome(val): return Some(val);
-            case LReturnNone: return None;
-            case LAdvance:
-        }
+        for (cl in controlList) {
+            var flowControl = cl(stringToken, next);
+            advanceChars(input, flowControl.advanceBy);
 
-        flowControl = intoCString(stringToken);
-        advanceChars(input, flowControl.advanceBy);
-        switch (flowControl.flowControl) {
-            case LReturnSome(val): return Some(val);
-            case LReturnNone: return None;
-            case LAdvance:
-        }
-
-        flowControl = intoCInt(stringToken, next);
-        advanceChars(input, flowControl.advanceBy);
-        switch (flowControl.flowControl) {
-            case LReturnSome(val): return Some(val);
-            case LReturnNone: return None;
-            case LAdvance:
-        }
-
-        flowControl = intoCFloat(stringToken, next);
-        advanceChars(input, flowControl.advanceBy);
-        switch (flowControl.flowControl) {
-            case LReturnSome(val): return Some(val);
-            case LReturnNone: return None;
-            case LAdvance:
-        }
-
-        flowControl = intoCBool(stringToken, next);
-        advanceChars(input, flowControl.advanceBy);
-        switch (flowControl.flowControl) {
-            case LReturnSome(val): return Some(val);
-            case LReturnNone: return None;
-            case LAdvance:
-        }
-
-        flowControl = intoKeyword(stringToken, next);
-        advanceChars(input, flowControl.advanceBy);
-        switch (flowControl.flowControl) {
-            case LReturnSome(val): return Some(val);
-            case LReturnNone: return None;
-            case LAdvance:
-        }
-
-        flowControl = intoCIdent(stringToken, next);
-        advanceChars(input, flowControl.advanceBy);
-        switch (flowControl.flowControl) {
-            case LReturnSome(val): return Some(val);
-            case LReturnNone: return None;
-            case LAdvance:
+            switch (flowControl.flowControl) {
+                case LReturnSome(val): return Some(val);
+                case LReturnNone: return None;
+                case LAdvance: continue;
+            }
         }
 
         return None;
