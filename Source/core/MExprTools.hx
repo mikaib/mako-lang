@@ -12,7 +12,6 @@ class MExprTools {
     private static function _iterateExpr(expr: MExpr, callback: MExpr->Void): Void {
         final invoke = (e: MExpr) -> {
             _iterateExpr(e, callback);
-            callback(e);
         };
 
         switch expr.kind {
@@ -20,6 +19,8 @@ class MExprTools {
             case EBinop(e0, e1, _): invoke(e0); invoke(e1);
             case EConst(_): null;
         }
+
+        callback(expr);
     }
 
     public static extern inline overload function iterate(list: MExprList, callback: MExpr->Void): Void {

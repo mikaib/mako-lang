@@ -7,8 +7,8 @@ class MTypeConstraint {
     public var to: MType;
     public var bidirectional: Bool;
 
-    public var flattenedCo: Array<MType> = [];
-    public var flattenedEq: Array<MType> = [];
+    public var flattenedCo: Array<MType> = []; // type must unify with these types, but the "to" type may also turn into "from"
+    public var flattenedEq: Array<MType> = []; // type must directly be able to unify with all of the above, "to" will remain the same.
 
     public function complete(t: MType): Void {
         var c = t.concrete();

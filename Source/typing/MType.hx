@@ -28,6 +28,10 @@ class MType {
         return !_concrete.defined;
     }
 
+    public function width(): Int {
+        return _concrete.width();
+    }
+
     public function concrete(): MConcreteType {
         return _concrete;
     }

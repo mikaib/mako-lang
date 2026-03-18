@@ -34,6 +34,17 @@ class MConcreteType {
         this.defined = true;
     }
 
+    public function width(): Int {
+        return switch name {
+            case "void": 0;
+            case "i8", "u8", "bool": 8;
+            case "i16", "u16", "f16": 16;
+            case "i32", "u32", "f32": 32;
+            case "i64", "u64", "f64": 64;
+            case _: 0;
+        }
+    }
+
     public function toString() {
         return defined ? 'TType($name, [${params.map(Std.string).join(", ")}])' : 'TMono($id)';
     }
