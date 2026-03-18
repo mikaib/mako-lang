@@ -202,14 +202,6 @@ class MLexer {
         return {flowControl: LAdvance, advanceBy: 0};
     }
 
-    OAddAssign: "+=";
-    case OSubtractAssign: "-=";
-    case OMultiplyAssign: "*=";
-    case ODivideAssign: "/=";
-    case OOrAssign: "|=";
-    case OAndAssign: "&=";
-    case OXorAssign: "^=";
-
     private function intoOperator(stringToken: String, next: MOption<MChar>): LexerFlowControl {
         switch (stringToken) {
             case "<" if (next.isValue("=")):
