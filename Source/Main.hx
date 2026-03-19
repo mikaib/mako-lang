@@ -5,6 +5,7 @@ import core.MBinop;
 import typing.MTypeSystem;
 import typing.MType;
 import lexing.MLexer;
+import parsing.MParser;
 
 class Main {
 
@@ -50,6 +51,10 @@ class Main {
         var lexer = new MLexer(code, "main.hx");
         var tokens = lexer.lexTokens();
         trace(tokens.map(t -> '\n$t'));
+
+        var parser = new MParser(tokens);
+        var ast = parser.parseTree();
+        trace(ast);
     }
 
 }
