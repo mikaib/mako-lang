@@ -5,6 +5,7 @@ import parsing.MExpr;
 import core.MExprTools;
 import core.MOption;
 import core.MOptionKind;
+import haxe.exceptions.NotImplementedException;
 
 class MTypeSystem {
 
