@@ -2,6 +2,7 @@ package core;
 
 import parsing.MExpr;
 import parsing.MExprList;
+import haxe.exceptions.NotImplementedException;
 
 class MExprTools {
 
@@ -19,6 +20,7 @@ class MExprTools {
             case EBlock(list): for (e in list) invoke(e);
             case EBinop(e0, e1, _): invoke(e0); invoke(e1);
             case EConst(_): null;
+            default: throw new NotImplementedException();
         }
     }
 

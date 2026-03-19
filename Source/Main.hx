@@ -49,7 +49,7 @@ class Main {
 
         var lexer = new MLexer(code, "main.hx");
         var tokens = lexer.lexTokens();
-        trace(tokens);
+        trace(tokens.map(t -> '\n$t'));
     }
 
 }

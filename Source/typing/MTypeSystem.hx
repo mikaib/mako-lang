@@ -5,6 +5,7 @@ import parsing.MExpr;
 import core.MExprTools;
 import core.MOption;
 import core.MOptionKind;
+import haxe.exceptions.NotImplementedException;
 
 class MTypeSystem {
 
@@ -50,6 +51,7 @@ class MTypeSystem {
 
             case EConst(CIdent(name)): null; // TODO: impl
             case EBlock(_), EConst(_): null;
+            default: throw new NotImplementedException();
         }
     }
 

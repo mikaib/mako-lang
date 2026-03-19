@@ -49,8 +49,8 @@ enum MTokenOperator {
     OGreaterThenEqualTo;
     OLessThen;
     OLessThenEqualTo;
-    ORotateLeft;
-    ORotateRight;
+    OShiftLeft;
+    OShiftRight;
     OBitwiseOr;
     OLogicalOr;
     OBitwiseAnd;
@@ -132,8 +132,8 @@ class MTokenUtil {
             case OGreaterThenEqualTo: ">=";
             case OLessThen: "<";
             case OLessThenEqualTo: "<=";
-            case ORotateLeft: "<<";
-            case ORotateRight: ">>";
+            case OShiftLeft: "<<";
+            case OShiftRight: ">>";
             case OBitwiseOr: "|";
             case OLogicalOr: "||";
             case OBitwiseAnd: "&";
