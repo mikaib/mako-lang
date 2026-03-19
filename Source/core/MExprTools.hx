@@ -13,7 +13,6 @@ class MExprTools {
     private static function _iterateExpr(expr: MExpr, callback: MExpr->Void): Void {
         final invoke = (e: MExpr) -> {
             _iterateExpr(e, callback);
-            callback(e);
         };
 
         switch expr.kind {
@@ -22,6 +21,8 @@ class MExprTools {
             case EConst(_): null;
             default: throw new NotImplementedException();
         }
+
+        callback(expr);
     }
 
     public static extern inline overload function iterate(list: MExprList, callback: MExpr->Void): Void {

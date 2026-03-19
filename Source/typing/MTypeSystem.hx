@@ -49,9 +49,11 @@ class MTypeSystem {
                 unify(e0.type, e1.type, true);
                 expr.type.setRef(e0.type.concrete());
 
+            case EBlock(list):
+                expr.type.setRef(list.last().type.concrete());
+
             case EConst(CIdent(name)): null; // TODO: impl
-            case EBlock(_), EConst(_): null;
-            default: throw new NotImplementedException();
+            case EConst(_): null;
         }
     }
 
