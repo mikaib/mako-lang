@@ -207,13 +207,13 @@ class MLexer {
             case "<" if (next.isValue("=")):
                 return {flowControl: LReturnSome(TTokenOperator(OLessThenEqualTo)), advanceBy: 1};
             case "<" if (next.isValue("<")):
-                return {flowControl: LReturnSome(TTokenOperator(ORotateLeft)), advanceBy: 1};
+                return {flowControl: LReturnSome(TTokenOperator(OShiftLeft)), advanceBy: 1};
             case "<": return {flowControl: LReturnSome(TTokenOperator(OLessThen)), advanceBy: 0};
 
             case ">" if (next.isValue("=")):
                 return {flowControl: LReturnSome(TTokenOperator(OGreaterThenEqualTo)), advanceBy: 1};
             case ">" if (next.isValue(">")):
-                return {flowControl: LReturnSome(TTokenOperator(ORotateRight)), advanceBy: 1};
+                return {flowControl: LReturnSome(TTokenOperator(OShiftRight)), advanceBy: 1};
             case ">": return {flowControl: LReturnSome(TTokenOperator(OGreatherThen)), advanceBy: 0};
 
             case "=" if (next.isValue("=")):
@@ -241,19 +241,19 @@ class MLexer {
             case "&": return {flowControl: LReturnSome(TTokenOperator(OBitwiseAnd)), advanceBy: 0};
 
             case "*" if (next.isValue("=")):
-                return {flowControl: LReturnSome(TTokenOperator(OMultiplyAssign)), advanceBy: 0};
+                return {flowControl: LReturnSome(TTokenOperator(OMultiplyAssign)), advanceBy: 1};
             case "*": return {flowControl: LReturnSome(TTokenOperator(OMultiply)), advanceBy: 0};
 
             case "/" if (next.isValue("=")):
-                return {flowControl: LReturnSome(TTokenOperator(ODivideAssign)), advanceBy: 0};
+                return {flowControl: LReturnSome(TTokenOperator(ODivideAssign)), advanceBy: 1};
             case "/": return {flowControl: LReturnSome(TTokenOperator(ODivide)), advanceBy: 0};
 
             case "+" if (next.isValue("=")):
-                return {flowControl: LReturnSome(TTokenOperator(OAddAssign)), advanceBy: 0};
+                return {flowControl: LReturnSome(TTokenOperator(OAddAssign)), advanceBy: 1};
             case "+": return {flowControl: LReturnSome(TTokenOperator(OPlus)), advanceBy: 0};
 
             case "-" if (next.isValue("=")):
-                return {flowControl: LReturnSome(TTokenOperator(OSubtractAssign)), advanceBy: 0};
+                return {flowControl: LReturnSome(TTokenOperator(OSubtractAssign)), advanceBy: 1};
             case "-": return {flowControl: LReturnSome(TTokenOperator(OMinus)), advanceBy: 0};
 
             default:
@@ -312,7 +312,17 @@ class MLexer {
         if (!tokenKind.hasValue()) {
             return None;
         }
-        var position: MPositionRange = { min: {path: _filePath, line: lastTokenLineNumber, column: lastTokenCharIndex}, max: {path: _filePath, line: currentLineNumber, column: currentCharIndex}}
+        var position: MPositionRange = {
+            min: {
+                line: lastTokenLineNumber,
+                column: lastTokenCharIndex
+            },
+            max: {
+                line: currentLineNumber,
+                column: currentCharIndex
+            },
+            path: _filePath
+        }
         updateLastTokenPosition(currentLineNumber, currentCharIndex);
 
         return Some({ kind: tokenKind.unwrap(), pos: position});
