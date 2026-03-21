@@ -7,7 +7,7 @@ typedef ParserPathsList = (ArrayView<MToken>) -> ParserFlowControl;
 
 enum ParserFlowControl {
     PReturnSome(expr:MExpr);
-    PAdvance;
+    PNotParsed;
 }
 
 class MParser {
@@ -33,7 +33,7 @@ class MParser {
                         ast.push(val);
                         break;
                     }
-                    case PAdvance: continue;
+                    case PNotParsed: continue;
                 }
             }
         }

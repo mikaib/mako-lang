@@ -10,6 +10,7 @@ import core.MVarDecl;
 import core.MConst;
 import haxe.macro.Expr.Access;
 import typing.MType;
+import parsing.paths.MBlockPath.tryIntoEBlock;
 
 class MVarsPath {
 
@@ -50,7 +51,7 @@ class MVarsPath {
                 read_index += 1;
 
             default:
-                return PAdvance;
+                return PNotParsed;
         }
 
         // Variable names
@@ -92,22 +93,12 @@ class MVarsPath {
 
         input.consume(read_index);
 
+        // variable expression
         var block = MParseBlocker.createBlock(input, None, TSemiColon);
-        var parser = new MParser(block);
-        var expression = parser.parseTree();
-        variable.expr = {
-            kind: MExprKind.EBlock(expression),
-            pos: {
-                min: {
-                    line: block[0].pos.min.line,
-                    column: block[0].pos.min.column
-                },
-                max: {
-                    line: block[block.length].pos.max.line,
-                    column: block[block.length].pos.max.column
-                },
-                path: input[0].pos.path,
-            }
+        var expression = tryIntoEBlock(block);
+        switch (expression) {
+            case PReturnSome(v):
+                variable.expr = v;
         }
 
         input.consume(block.length);
