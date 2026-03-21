@@ -19,7 +19,7 @@ enum MExprKind {
     EReturn(expr: MExpr);
     EFunction(f: MFuncDecl);
     EIf(econd: MExpr, eif: MExpr, eelse: MExpr);
-    EVars(decls: Array<MVarDecl>);
+    EVars(decl: MVarDecl);
     EConst(const: MConst);
     EBreak;
     EContinue;

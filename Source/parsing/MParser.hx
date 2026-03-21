@@ -1,17 +1,13 @@
 package parsing;
 import lexing.MToken;
 import parsing.paths.MVarsPath.tryIntoEVars;
+import core.MArrayView.ArrayView;
 
-typedef ParserPathsList = (Array<MToken>, Int) -> ParserFlowControl;
+typedef ParserPathsList = (ArrayView<MToken>) -> ParserFlowControl;
 
-typedef ParserFlowControl = {
-    flowControl: ParserFlowControlEnum,
-    consumedTokens: Int,
-}
-
-enum ParserFlowControlEnum {
-    LReturnSome(expr:MExpr);
-    LAdvance;
+enum ParserFlowControl {
+    PReturnSome(expr:MExpr);
+    PAdvance;
 }
 
 class MParser {
@@ -20,26 +16,24 @@ class MParser {
         tryIntoEVars,
     ];
 
-    var _tokens: Array<MToken>;
-    var read_index = 0;
+    var _tokens: ArrayView<MToken>;
 
-    public function new(tokens: Array<MToken>) {
+    public function new(tokens: ArrayView<MToken>) {
         _tokens = tokens;
     }
 
     public function parseTree(): MExprList {
         var ast = new MExprList();
-        while (read_index < _tokens.length) {
+        while (_tokens.length > 0) {
             for (path in pathsList) {
-                var flowControl = path(_tokens, read_index);
-                read_index += flowControl.consumedTokens;
+                var flowControl = path(_tokens);
 
-                switch (flowControl.flowControl) {
-                    case LReturnSome(val): {
+                switch (flowControl) {
+                    case PReturnSome(val): {
                         ast.push(val);
                         break;
                     }
-                    case LAdvance: continue;
+                    case PAdvance: continue;
                 }
             }
         }

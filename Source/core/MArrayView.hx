@@ -2,8 +2,8 @@ package core;
 
 // Non re-allocating Array 'slice'
 class ArrayView<T> {
-    public var data: Array<T>;
-    public var offset: Int;
+    private var data: Array<T>;
+    private var offset: Int;
     public var length: Int;
 
     public function new(data: Array<T>) {
@@ -38,5 +38,16 @@ class ArrayView<T> {
         offset += n;
         length -= n;
         return this;
+    }
+
+    public function subslice(start: Int, len: Int): ArrayView<T> {
+        if (start < 0 || len < 0 || start + len > length) {
+            throw "Index out of bounds";
+        }
+
+        var view = new ArrayView<T>(data);
+        view.offset = this.offset + start;
+        view.length = len;
+        return view;
     }
 }

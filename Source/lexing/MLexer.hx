@@ -189,6 +189,7 @@ class MLexer {
             case "func": return {flowControl: LReturnSome(TKeyword(MTokenKeyword.KFunc)), advanceBy: 0};
             case "class": return {flowControl: LReturnSome(TKeyword(MTokenKeyword.KClass)), advanceBy: 0};
             case "public": return {flowControl: LReturnSome(TKeyword(MTokenKeyword.KPublic)), advanceBy: 0};
+            case "protected": return {flowControl: LReturnSome(TKeyword(MTokenKeyword.KProtected)), advanceBy: 0};
             case "private": return {flowControl: LReturnSome(TKeyword(MTokenKeyword.KPrivate)), advanceBy: 0};
             case "return": return {flowControl: LReturnSome(TKeyword(MTokenKeyword.KReturn)), advanceBy: 0};
             case "const": return {flowControl: LReturnSome(TKeyword(MTokenKeyword.KConst)), advanceBy: 0};

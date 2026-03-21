@@ -24,6 +24,7 @@ enum MTokenKeyword {
     KFunc;
     KClass;
     KPublic;
+    KProtected;
     KPrivate;
     KReturn;
     KConst;
@@ -104,6 +105,7 @@ class MTokenUtil {
             case KFunc: "func";
             case KClass: "class";
             case KPublic: "public";
+            case KProtected: "protected";
             case KPrivate: "private";
             case KReturn: "return";
             case KConst: "const";

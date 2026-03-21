@@ -6,6 +6,7 @@ import typing.MTypeSystem;
 import typing.MType;
 import lexing.MLexer;
 import parsing.MParser;
+import core.MArrayView.ArrayView;
 
 class Main {
 
@@ -52,7 +53,7 @@ class Main {
         var tokens = lexer.lexTokens();
         trace(tokens.map(t -> '\n$t'));
 
-        var parser = new MParser(tokens);
+        var parser = new MParser(new ArrayView(tokens));
         var ast = parser.parseTree();
         trace(ast);
     }
