@@ -6,6 +6,7 @@ import core.MBinop;
 import core.MVarDecl;
 import core.MFuncDecl;
 import core.MUnop;
+import core.MOption;
 
 enum MExprKind {
     EBinop(left: MExpr, right: MExpr, op: MBinop);
@@ -18,7 +19,7 @@ enum MExprKind {
     EWhile(econd: MExpr, ebody: MExpr);
     EReturn(expr: MExpr);
     EFunction(f: MFuncDecl);
-    EIf(econd: MExpr, eif: MExpr, eelse: MExpr);
+    EIf(econd: MExpr, eif: MExpr, eelse: MOption<MExpr>);
     EVars(decl: MVarDecl);
     EConst(const: MConst);
     EBreak;

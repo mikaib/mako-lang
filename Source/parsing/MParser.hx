@@ -1,6 +1,8 @@
 package parsing;
 import lexing.MToken;
 import parsing.paths.MVarsPath.tryIntoEVars;
+import parsing.paths.MBlockPath.tryIntoEBlock;
+import parsing.paths.MIfPath.tryIntoEIf;
 import core.MArrayView.ArrayView;
 
 typedef ParserPathsList = (ArrayView<MToken>) -> ParserFlowControl;
@@ -14,6 +16,8 @@ class MParser {
 
     static var pathsList: Array<ParserPathsList> = [
         tryIntoEVars,
+        tryIntoEIf,
+        tryIntoEBlock,
     ];
 
     var _tokens: ArrayView<MToken>;

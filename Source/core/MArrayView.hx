@@ -12,7 +12,6 @@ class ArrayView<T> {
         this.length = data.length;
     }
 
-    @:arrayAccess
     public function get(index: Int): T {
         if (index < 0 || index >= length) {
             throw "Index out of bounds";
@@ -20,7 +19,6 @@ class ArrayView<T> {
         return data[offset + index];
     }
 
-    @:arrayAccess
     public function set(index:Int, value:T):T {
         if (index < 0 || index >= length) {
             throw "Index out of bounds";
