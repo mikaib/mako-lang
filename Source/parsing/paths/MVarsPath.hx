@@ -15,15 +15,9 @@ import haxe.Exception;
 class MVarsPath {
 
     public static function tryIntoEVars(input: ArrayView<MToken>): ParserFlowControl {
-        //valid
-        // var x;
-        // var x = 1;
-        // var x, y = "s";
-        // var x: Int = x;
-        // var x, y: Int = 2;
-
         var readIndex = 0;
         var variable = new MVarDecl();
+        var minToken = input.get(0);
 
         // Access specifier
         switch (input.get(readIndex).kind) {
@@ -97,6 +91,8 @@ class MVarsPath {
 
         // variable expression
         var block = MParseBlocker.createBlock(input, None, TSemiColon);
+        trace(block.get(0));
+        var max = block.get(block.length - 1).pos.max;
         var expression = tryIntoEBlock(block);
         switch (expression) {
             case PReturnSome(v):
@@ -109,15 +105,9 @@ class MVarsPath {
              {
                  kind: MExprKind.EVars(variable),
                  pos: {
-                     min: {
-                         line: input.get(0)?.pos.min.line,
-                         column: input.get(0)?.pos.min.column
-                     },
-                     max: {
-                         line: block.get(block.length)?.pos.max.line,
-                         column: block.get(block.length)?.pos.max.column
-                     },
-                     path: input.get(0)?.pos.path,
+                     min: minToken.pos.min,
+                     max: max,
+                     path: minToken.pos.path,
                  }
              }
         );

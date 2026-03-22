@@ -31,7 +31,7 @@ class MParseBlocker {
             throw new Exception("Could not create block, depth != 0");
         }
 
-        var subSlice = input.subslice(0, readIndex - 1);
+        var subSlice = input.subslice(0, readIndex);
         input.consume(readIndex);
         return subSlice;
     }

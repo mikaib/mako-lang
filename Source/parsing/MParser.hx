@@ -46,11 +46,8 @@ class MParser {
                 }
             }
             if (!parsed) {
-                throw new Exception(
-                    "Parsing failed, this part is unreachable in working code, unparsed tokens: " +
-                    _tokens.map(function(t) return Std.string(t)).join(", ") +
-                    _tokens.length
-                );
+                trace("Not all tokens could be parsed");
+                return ast;
             }
         }
         return ast;
