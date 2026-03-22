@@ -2,6 +2,8 @@ package parsing;
 import lexing.MToken;
 import parsing.paths.MVarsPath.tryIntoEVars;
 import parsing.paths.MIfPath.tryIntoEIf;
+import parsing.paths.MReturnPath.tryIntoEReturn;
+import parsing.paths.MConstPath.tryIntoEConst;
 import core.MArrayView.ArrayView;
 import haxe.Exception;
 
@@ -17,6 +19,8 @@ class MParser {
     static var pathsList: Array<ParserPathsList> = [
         tryIntoEVars,
         tryIntoEIf,
+        tryIntoEReturn,
+        tryIntoEConst,
     ];
 
     var _tokens: ArrayView<MToken>;
@@ -28,18 +32,26 @@ class MParser {
     public function parseTree(): MExprList {
         var ast = new MExprList();
         while (_tokens.length > 0) {
+            var parsed = false;
             for (path in pathsList) {
                 var flowControl = path(_tokens);
 
                 switch (flowControl) {
                     case PReturnSome(val): {
                         ast.push(val);
+                        parsed = true;
                         break;
                     }
                     case PNotParsed: continue;
                 }
             }
-            throw new Exception("Parsing failed, this part is unreachable in working code");
+            if (!parsed) {
+                throw new Exception(
+                    "Parsing failed, this part is unreachable in working code, unparsed tokens: " +
+                    _tokens.map(function(t) return Std.string(t)).join(", ") +
+                    _tokens.length
+                );
+            }
         }
         return ast;
     }

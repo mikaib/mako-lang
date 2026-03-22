@@ -50,8 +50,8 @@ class Main {
         ";*/
 
         var code = "
-            public const var x: i32 = 0;
-            var x: i32 = 0;
+            protected const var x, y: i64 = 0;
+            var z = 12.3;
         ";
 
         var lexer = new MLexer(code, "main.hx");

@@ -12,16 +12,16 @@ class ArrayView<T> {
         this.length = data.length;
     }
 
-    public function get(index: Int): T {
+    public function get(index: Int):Null<T> {
         if (index < 0 || index >= length) {
-            throw "Index out of bounds";
+            return null;
         }
         return data[offset + index];
     }
 
-    public function set(index:Int, value:T):T {
+    public function set(index:Int, value:T):Null<T> {
         if (index < 0 || index >= length) {
-            throw "Index out of bounds";
+            return null;
         }
 
         data[offset + index] = value;
@@ -47,5 +47,13 @@ class ArrayView<T> {
         view.offset = this.offset + start;
         view.length = len;
         return view;
+    }
+
+    public function map<U>(f: T -> U): Array<U> {
+        var result = new Array<U>();
+        for (i in 0...length) {
+            result.push(f(get(i)));
+        }
+        return result;
     }
 }

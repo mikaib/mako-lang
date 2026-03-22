@@ -41,8 +41,8 @@ class MVarsPath {
 
         // Is variable
         switch ([
-            input.get(readIndex).kind,
-            input.get(readIndex + 1).kind,
+            input.get(readIndex)?.kind,
+            input.get(readIndex + 1)?.kind,
         ]) {
             case [TKeyword(KConst), TKeyword(KVar)]:
                 variable.const = true;
@@ -58,8 +58,8 @@ class MVarsPath {
         // Variable names
         while(true) {
             switch ([
-                input.get(readIndex).kind,
-                input.get(readIndex + 1).kind,
+                input.get(readIndex)?.kind,
+                input.get(readIndex + 1)?.kind,
             ]) {
                 case [TConst(CIdent(v)), TComma]:
                     variable.names.push(v);
@@ -77,8 +77,8 @@ class MVarsPath {
 
         // Type
         switch ([
-            input.get(readIndex).kind,
-            input.get(readIndex + 1).kind,
+            input.get(readIndex)?.kind,
+            input.get(readIndex + 1)?.kind,
         ]) {
             case [TColon, TConst(CIdent(v))]:
                 variable.type = MType.make(v);
@@ -91,6 +91,7 @@ class MVarsPath {
         if (!Type.enumEq(input.get(readIndex).kind, TTokenOperator(OAssign))) {
             throw new Exception('Expected =, got ${input.get(readIndex).kind}');
         }
+        readIndex++;
 
         input.consume(readIndex);
 
@@ -109,14 +110,14 @@ class MVarsPath {
                  kind: MExprKind.EVars(variable),
                  pos: {
                      min: {
-                         line: input.get(0).pos.min.line,
-                         column: input.get(0).pos.min.column
+                         line: input.get(0)?.pos.min.line,
+                         column: input.get(0)?.pos.min.column
                      },
                      max: {
-                         line: block.get(block.length).pos.max.line,
-                         column: block.get(block.length).pos.max.column
+                         line: block.get(block.length)?.pos.max.line,
+                         column: block.get(block.length)?.pos.max.column
                      },
-                     path: input.get(0).pos.path,
+                     path: input.get(0)?.pos.path,
                  }
              }
         );

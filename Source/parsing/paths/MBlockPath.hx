@@ -10,14 +10,14 @@ class MBlockPath {
             kind: MExprKind.EBlock(expressions),
             pos: {
                 min: {
-                    line: input.get(0).pos.min.line,
-                    column: input.get(0).pos.min.column
+                    line: input.get(0)?.pos.min.line,
+                    column: input.get(0)?.pos.min.column
                 },
                 max: {
-                    line: input.get(input.length).pos.max.line,
-                    column: input.get(input.length).pos.max.column
+                    line: input.get(input.length)?.pos.max.line,
+                    column: input.get(input.length)?.pos.max.column
                 },
-                path: input.get(0).pos.path,
+                path: input.get(0)?.pos.path,
             }
         });
     }
