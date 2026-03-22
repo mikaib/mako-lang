@@ -1,9 +1,9 @@
 package parsing;
 import lexing.MToken;
 import parsing.paths.MVarsPath.tryIntoEVars;
-import parsing.paths.MBlockPath.tryIntoEBlock;
 import parsing.paths.MIfPath.tryIntoEIf;
 import core.MArrayView.ArrayView;
+import haxe.Exception;
 
 typedef ParserPathsList = (ArrayView<MToken>) -> ParserFlowControl;
 
@@ -17,7 +17,6 @@ class MParser {
     static var pathsList: Array<ParserPathsList> = [
         tryIntoEVars,
         tryIntoEIf,
-        tryIntoEBlock,
     ];
 
     var _tokens: ArrayView<MToken>;
@@ -40,6 +39,7 @@ class MParser {
                     case PNotParsed: continue;
                 }
             }
+            throw new Exception("Parsing failed, this part is unreachable in working code");
         }
         return ast;
     }

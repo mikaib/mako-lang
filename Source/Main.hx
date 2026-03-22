@@ -36,7 +36,7 @@ class Main {
 
         //trace(ast);
 
-        var code = "
+        /*var code = "
             const x:i32= 0;
 
             func mul(a: i32, b: i32) -> i32 {
@@ -47,6 +47,11 @@ class Main {
             var int = 4;
             var float = 3.14;
             var bool = true;
+        ";*/
+
+        var code = "
+            public const var x: i32 = 0;
+            var x: i32 = 0;
         ";
 
         var lexer = new MLexer(code, "main.hx");

@@ -1,7 +1,6 @@
 package parsing.paths;
 
 import parsing.MParser.ParserFlowControl;
-import haxe.exceptions.NotImplementedException;
 import lexing.MToken;
 import core.MArrayView.ArrayView;
 import core.MOptionKind;
@@ -11,6 +10,7 @@ import core.MConst;
 import haxe.macro.Expr.Access;
 import typing.MType;
 import parsing.paths.MBlockPath.tryIntoEBlock;
+import haxe.Exception;
 
 class MVarsPath {
 
@@ -61,17 +61,17 @@ class MVarsPath {
                 input.get(readIndex).kind,
                 input.get(readIndex + 1).kind,
             ]) {
-                case [TConst(CString(v)), TComma]:
+                case [TConst(CIdent(v)), TComma]:
                     variable.names.push(v);
                     readIndex += 2;
 
-                case [TConst(CString(v)), _]:
+                case [TConst(CIdent(v)), _]:
                     variable.names.push(v);
                     readIndex += 1;
                     break;
 
                 default:
-                    throw new NotImplementedException();
+                    throw new Exception('Error parsing var: ${input.get(readIndex).kind}');
             }
         }
 
@@ -80,7 +80,7 @@ class MVarsPath {
             input.get(readIndex).kind,
             input.get(readIndex + 1).kind,
         ]) {
-            case [TColon, TConst(CString(v))]:
+            case [TColon, TConst(CIdent(v))]:
                 variable.type = MType.make(v);
                 readIndex += 2;
 
@@ -88,8 +88,8 @@ class MVarsPath {
                 variable.type = MType.mono();
         }
 
-        if (!Type.enumEq(input.get(readIndex).kind, TTokenOperator(OEqual))) {
-            throw new NotImplementedException();
+        if (!Type.enumEq(input.get(readIndex).kind, TTokenOperator(OAssign))) {
+            throw new Exception('Expected =, got ${input.get(readIndex).kind}');
         }
 
         input.consume(readIndex);
