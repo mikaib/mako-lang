@@ -4,8 +4,9 @@ import parsing.paths.MVarsPath.tryIntoEVars;
 import parsing.paths.MIfPath.tryIntoEIf;
 import parsing.paths.MReturnPath.tryIntoEReturn;
 import parsing.paths.MConstPath.tryIntoEConst;
+import parsing.paths.MOperatorPath.tryIntoEOperator;
+import parsing.paths.MFunctionPath.tryIntoEFunction;
 import core.MArrayView.ArrayView;
-import haxe.Exception;
 
 typedef ParserPathsList = (ArrayView<MToken>) -> ParserFlowControl;
 
@@ -19,7 +20,9 @@ class MParser {
     static var pathsList: Array<ParserPathsList> = [
         tryIntoEVars,
         tryIntoEIf,
+        tryIntoEFunction,
         tryIntoEReturn,
+        tryIntoEOperator,
         tryIntoEConst,
     ];
 

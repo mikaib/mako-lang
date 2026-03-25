@@ -11,10 +11,9 @@ import parsing.paths.MBlockPath.tryIntoEBlock;
 import haxe.Exception;
 
 class MIfPath {
-    public function new() {}
 
     private static function parseElse(input: ArrayView<MToken>, currentIf: MExpr): MExpr {
-        if (input.length == 0 || !Type.enumEq(input.get(0).kind, TKeyword(KElse))) {
+        if (input.length == 0 || !Type.enumEq(input[0].kind, TKeyword(KElse))) {
             switch (currentIf.kind) {
                 case EIf(cond, eif, _):
                     currentIf.kind = EIf(cond, eif, None);
@@ -26,7 +25,7 @@ class MIfPath {
         input.consume(1);
 
         var eElse: MExpr;
-        if (Type.enumEq(input.get(0).kind, TKeyword(KIf))) {
+        if (Type.enumEq(input[0].kind, TKeyword(KIf))) {
             var control = tryIntoEIf(input);
             eElse = switch (control) {
                 case PReturnSome(v): v;
@@ -51,12 +50,12 @@ class MIfPath {
     }
 
     public static function tryIntoEIf(input: ArrayView<MToken>): ParserFlowControl {
-        if (input.length == 0 || !Type.enumEq(input.get(0).kind, TKeyword(KIf))) {
+        if (input.length == 0 || !Type.enumEq(input[0].kind, TKeyword(KIf))) {
             return PNotParsed;
         }
 
-        var path = input.get(0).pos.path;
-        var minPos = input.get(0).pos.min;
+        var path = input[0].pos.path;
+        var minPos = input[0].pos.min;
         input.consume(1);
 
         var condBlock = MParseBlocker.createBlock(input, Some(TParantOpen), TParantClose);

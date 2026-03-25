@@ -52,6 +52,15 @@ class Main {
         var code = "
             protected const var x, y: i64 = 0;
             var z = 12.3;
+            var u = !z;
+
+            func mul(a: i32, b: i32): i64 {
+                var g = 1;
+            }
+
+            func main() {
+
+            }
         ";
 
         var lexer = new MLexer(code, "main.hx");
@@ -60,7 +69,7 @@ class Main {
 
         var parser = new MParser(new ArrayView(tokens));
         var ast = parser.parseTree();
-        trace(ast);
+        trace(ast.map(t -> '\n$t'));
     }
 
 }

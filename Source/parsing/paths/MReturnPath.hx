@@ -8,11 +8,11 @@ import core.MOptionKind.None;
 
 class MReturnPath {
     public static function tryIntoEReturn(input: ArrayView<MToken>): ParserFlowControl {
-        if (input.length == 0 || !Type.enumEq(input.get(0).kind, TKeyword(KReturn))) {
+        if (input.length == 0 || !Type.enumEq(input[0].kind, TKeyword(KReturn))) {
             return PNotParsed;
         }
 
-        var min = input.get(0).pos.min;
+        var min = input[0].pos.min;
 
         input.consume(1);
 
@@ -28,9 +28,9 @@ class MReturnPath {
         return PReturnSome({
             kind: ret,
             pos: {
-                path: input.get(0).pos.path,
+                path: input[0].pos.path,
                 min: min,
-                max: input.get(0).pos.max,
+                max: input[0].pos.max,
             }
         });
     }

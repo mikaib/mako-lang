@@ -17,10 +17,10 @@ class MVarsPath {
     public static function tryIntoEVars(input: ArrayView<MToken>): ParserFlowControl {
         var readIndex = 0;
         var variable = new MVarDecl();
-        var minToken = input.get(0);
+        var minToken = input[0];
 
         // Access specifier
-        switch (input.get(readIndex).kind) {
+        switch (input[readIndex].kind) {
             case TKeyword(KPublic):
                 variable.access = APublic;
                 readIndex += 1;
@@ -35,8 +35,8 @@ class MVarsPath {
 
         // Is variable
         switch ([
-            input.get(readIndex)?.kind,
-            input.get(readIndex + 1)?.kind,
+            input[readIndex]?.kind,
+            input[readIndex + 1]?.kind,
         ]) {
             case [TKeyword(KConst), TKeyword(KVar)]:
                 variable.const = true;
@@ -52,8 +52,8 @@ class MVarsPath {
         // Variable names
         while(true) {
             switch ([
-                input.get(readIndex)?.kind,
-                input.get(readIndex + 1)?.kind,
+                input[readIndex]?.kind,
+                input[readIndex + 1]?.kind,
             ]) {
                 case [TConst(CIdent(v)), TComma]:
                     variable.names.push(v);
@@ -65,14 +65,14 @@ class MVarsPath {
                     break;
 
                 default:
-                    throw new Exception('Error parsing var: ${input.get(readIndex).kind}');
+                    throw new Exception('Error parsing var: ${input[readIndex].kind}');
             }
         }
 
         // Type
         switch ([
-            input.get(readIndex)?.kind,
-            input.get(readIndex + 1)?.kind,
+            input[readIndex]?.kind,
+            input[readIndex + 1]?.kind,
         ]) {
             case [TColon, TConst(CIdent(v))]:
                 variable.type = MType.make(v);
@@ -82,8 +82,8 @@ class MVarsPath {
                 variable.type = MType.mono();
         }
 
-        if (!Type.enumEq(input.get(readIndex).kind, TTokenOperator(OAssign))) {
-            throw new Exception('Expected =, got ${input.get(readIndex).kind}');
+        if (!Type.enumEq(input[readIndex].kind, TTokenOperator(OAssign))) {
+            throw new Exception('Expected =, got ${input[readIndex].kind}');
         }
         readIndex++;
 
@@ -91,8 +91,7 @@ class MVarsPath {
 
         // variable expression
         var block = MParseBlocker.createBlock(input, None, TSemiColon);
-        trace(block.get(0));
-        var max = block.get(block.length - 1).pos.max;
+        var max = block[block.length - 1].pos.max;
         var expression = tryIntoEBlock(block);
         switch (expression) {
             case PReturnSome(v):

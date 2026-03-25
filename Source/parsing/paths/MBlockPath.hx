@@ -4,8 +4,11 @@ import lexing.MToken;
 import parsing.MParser.ParserFlowControl;
 class MBlockPath {
     public static function tryIntoEBlock(input: ArrayView<MToken>): ParserFlowControl {
-        var minToken = input.get(0);
-        var max = input.get(input.length - 1).pos.max;
+        if (input.length < 1) {
+            return PNotParsed;
+        }
+        var minToken = input[0];
+        var max = input[input.length - 1].pos.max;
 
         var parser = new MParser(input);
         var expressions = parser.parseTree();

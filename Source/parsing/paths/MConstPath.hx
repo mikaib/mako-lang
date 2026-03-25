@@ -3,13 +3,12 @@ package parsing.paths;
 import core.MArrayView.ArrayView;
 import lexing.MToken;
 import parsing.MParser.ParserFlowControl;
-import core.MPositionRange;
 import lexing.MTokenKind.TConst;
 
 class MConstPath {
     public static function tryIntoEConst(input: ArrayView<MToken>): ParserFlowControl {
-        var min = input.get(0);
-        var expr = switch (input.get(0).kind) {
+        var min = input[0];
+        var expr = switch (input[0].kind) {
             case TConst(c):
                 input.consume(1);
                 MExprKind.EConst(c);
