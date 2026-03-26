@@ -14,24 +14,12 @@ class MConcreteType {
         return {};
     }
 
-    public static function createConcrete(name: String): MConcreteType {
+    public static function createConcrete(name: String, ?params: Array<MType>): MConcreteType {
         var c: MConcreteType = {};
         c.name = name;
         c.defined = true;
-
+        c.params = params ?? [];
         return c;
-    }
-
-    private function new() {}
-
-    public function set(c: MConcreteType) {
-        if (!c.defined) {
-            return;
-        }
-
-        this.name = c.name;
-        this.params = c.params.copy();
-        this.defined = true;
     }
 
     public function width(): Int {
@@ -46,7 +34,36 @@ class MConcreteType {
     }
 
     public function toString() {
-        return defined ? 'TType($name, [${params.map(Std.string).join(", ")}])' : 'TMono($id)';
+        return defined ? (params.length == 0 ? name : '$name<${params.map(Std.string).join(", ")}>') : 'Mono<#$id>';
+    }
+
+    public function isInt(): Bool {
+        return switch name {
+            case "i8", "i16", "i32", "i64": true;
+            case _: false;
+        }
+    }
+
+    public function isUInt(): Bool {
+        return switch name {
+            case "u8", "u16", "u32", "u64": true;
+            case _: false;
+        }
+    }
+
+    public function isFloat(): Bool {
+        return switch name {
+            case "f16", "f32", "f64": true;
+            case _: false;
+        }
+    }
+
+    public function isBool(): Bool {
+        return name == "bool";
+    }
+
+    public function isNumeric(): Bool {
+        return isInt() || isUInt() || isFloat();
     }
 
 }
