@@ -14,7 +14,6 @@ import haxe.Exception;
 
 class MFunctionPath {
     public static function tryIntoEFunction(input: ArrayView<MToken>): ParserFlowControl {
-        trace(input.map(t -> 't: ${t.kind}}'));
         var readIndex = 0;
         var func = new MFuncDecl();
         var minToken = input[0];
@@ -91,7 +90,6 @@ class MFunctionPath {
 
         var funcBlock = MParseBlocker.createBlock(input, Some(TBraceOpen), TBraceClose);
         var max = funcBlock[funcBlock.length - 1].pos.max;
-        funcBlock.consume(1); // Consume TBraceOpen
         var expression = tryIntoEBlock(funcBlock);
         switch (expression) {
             case PReturnSome(v):
@@ -99,8 +97,6 @@ class MFunctionPath {
             case PNotParsed:
                 func.expr = null;
         }
-
-        trace("Made func");
 
         return PReturnSome({
             kind: MExprKind.EFunction(func),

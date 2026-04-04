@@ -18,10 +18,10 @@ enum ParserFlowControl {
 class MParser {
 
     static var pathsList: Array<ParserPathsList> = [
-        tryIntoEFunction,
         tryIntoEVars,
         tryIntoEOperation,
         tryIntoEIf,
+        tryIntoEFunction,
         tryIntoEReturn,
         tryIntoEConst,
     ];

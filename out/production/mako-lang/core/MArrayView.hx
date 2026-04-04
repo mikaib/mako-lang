@@ -19,7 +19,7 @@ abstract ArrayView<T>(ArrayViewData<T>) from ArrayViewData<T> to ArrayViewData<T
         this = {
             data: data,
             offset: 0,
-            length : data.length
+            length : 0
         };
     }
 

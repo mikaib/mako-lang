@@ -8,7 +8,6 @@ import core.MOption;
 import core.MOptionKind;
 import core.MBinop;
 import core.MUnop;
-import haxe.Exception;
 
 class MOperatorPath {
     private static function getPrecedance(op: MTokenOperator):Null<Int> {
@@ -26,23 +25,15 @@ class MOperatorPath {
             case OLessThen, OGreatherThen:
                 return 6;
             default:
-                throw new Exception('Unexpected operator: $op');
+                return null;
         }
     }
 
     private static function makeExpressionBlock(input: ArrayView<MToken>): ParserFlowControl {
         var index = 0;
-        var run = true;
-        while (input.length - 1 > index && run) {
-            switch (input[index].kind) {
-                case MTokenKind.TTokenOperator(_):
-                    run = false;
-                default:
-                    index++;
-            }
-
-            if (!run) {
-                break;
+        while (input.length > 0) {
+            if (!Std.isOfType(input[index].kind, MTokenKind.TTokenOperator)) {
+                index++;
             }
         }
 
@@ -64,7 +55,7 @@ class MOperatorPath {
         else if (Type.enumEq(op, MTokenOperator.ODivide)) {
             return MBinop.Divide;
         }
-        throw new Exception('Unexpected bin operator: $op');
+        return null;
     }
 
     private static function intoUnOp(op: MTokenOperator):Null<MUnop> {
@@ -80,12 +71,11 @@ class MOperatorPath {
         else if (Type.enumEq(op, MTokenOperator.OMinus)) {
             return MUnop.Min;
         }
-        throw new Exception('Unexpected unop operator: $op');
+        return null;
     }
 
     private static function makeOperationAST(input: ArrayView<MToken>, leftAST: MOption<MExpr>): ParserFlowControl {
-        if (leftAST == None) {
-            trace(input.map(t -> 't: ${t.kind}'));
+        if (leftAST == null) {
             var expr = makeExpressionBlock(input);
             switch(expr) {
                 case PReturnSome(ast):
@@ -105,7 +95,7 @@ class MOperatorPath {
         input.consume(1);
         var depth = 0;
         var readIndex = 0;
-        while (input.length > readIndex) {
+        while (input.length > 0) {
             if (Type.enumEq(input[readIndex].kind, TParantOpen)) {
                 depth++;
             }
@@ -125,13 +115,9 @@ class MOperatorPath {
             readIndex++;
         }
 
-        if (readIndex == 0) {
-            return PNotParsed;
-        }
-
         var right = input.subslice(0, readIndex);
         input.consume(readIndex);
-        var lastToken = right[right.length - 1];
+        var lastToken = right[right.length];
         var rightExpression = tryIntoEBlock(right);
         var rExpr = switch (rightExpression) {
             case PReturnSome(r):
@@ -174,10 +160,8 @@ class MOperatorPath {
 
         var operationBlock = input.subslice(0, readIndex);
         var expr = makeOperationAST(operationBlock, None);
-        switch (expr) {
-            case PReturnSome(_):
-                input.consume(readIndex);
-            case PNotParsed:
+        if (!Std.isOfType(expr, PReturnSome)) {
+            input.consume(readIndex);
         }
         return expr;
 
