@@ -7,6 +7,7 @@ import typing.MType;
 import lexing.MLexer;
 import parsing.MParser;
 import core.MArrayView.ArrayView;
+import parsing.dotter.MDotCreator;
 
 class Main {
 
@@ -72,6 +73,8 @@ class Main {
 
         var parser = new MParser(new ArrayView(tokens));
         var ast = parser.parseTree();
+        var dotter = new MDotCreator();
+        dotter.fromAST(ast);
         trace(ast.map(t -> '\n$t'));
     }
 
