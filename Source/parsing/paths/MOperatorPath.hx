@@ -90,7 +90,7 @@ class MOperatorPath {
             switch(expr) {
                 case PReturnSome(ast):
                     leftAST = Some(ast);
-                case PNotParsed:
+                default:
                     leftAST;
             }
         }
@@ -118,7 +118,7 @@ class MOperatorPath {
                 default: null;
             }
 
-            if (op != null && getPrecedance(op) > getPrecedance(firstOperator)) {
+            if (op != null && getPrecedance(op) >= getPrecedance(firstOperator) && depth == 0) {
                 break;
             }
 
@@ -136,6 +136,8 @@ class MOperatorPath {
         var rExpr = switch (rightExpression) {
             case PReturnSome(r):
                 r;
+            case PReturnEaten:
+                return PReturnEaten;
             case PNotParsed:
                 return PNotParsed;
         }
@@ -177,7 +179,7 @@ class MOperatorPath {
         switch (expr) {
             case PReturnSome(_):
                 input.consume(readIndex);
-            case PNotParsed:
+            default:
         }
         return expr;
 

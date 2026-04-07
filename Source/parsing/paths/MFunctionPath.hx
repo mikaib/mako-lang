@@ -96,7 +96,7 @@ class MFunctionPath {
         switch (expression) {
             case PReturnSome(v):
                 func.expr = v;
-            case PNotParsed:
+            default:
                 func.expr = null;
         }
 

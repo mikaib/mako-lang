@@ -5,6 +5,7 @@ import parsing.MParser.ParserFlowControl;
 import lexing.MTokenKind.MTokenKeyword.KReturn;
 import parsing.paths.MBlockPath.MBlockPath.tryIntoEBlock;
 import core.MOptionKind.None;
+import haxe.Exception;
 
 class MReturnPath {
     public static function tryIntoEReturn(input: ArrayView<MToken>): ParserFlowControl {
@@ -21,8 +22,8 @@ class MReturnPath {
         var ret = switch (expression) {
             case PReturnSome(v):
                 MExprKind.EReturn(v);
-            case PNotParsed:
-                return PNotParsed;
+            case PReturnEaten: return PReturnEaten;
+            case PNotParsed: return PNotParsed;
         }
 
         return PReturnSome({

@@ -2,6 +2,7 @@ package parsing;
 import lexing.MToken;
 import parsing.paths.MVarsPath.tryIntoEVars;
 import parsing.paths.MIfPath.tryIntoEIf;
+import parsing.paths.MParantPath.tryIntoEParants;
 import parsing.paths.MReturnPath.tryIntoEReturn;
 import parsing.paths.MConstPath.tryIntoEConst;
 import parsing.paths.MOperatorPath.tryIntoEOperation;
@@ -12,12 +13,14 @@ typedef ParserPathsList = (ArrayView<MToken>) -> ParserFlowControl;
 
 enum ParserFlowControl {
     PReturnSome(expr:MExpr);
+    PReturnEaten;
     PNotParsed;
 }
 
 class MParser {
 
     static var pathsList: Array<ParserPathsList> = [
+        tryIntoEParants,
         tryIntoEFunction,
         tryIntoEVars,
         tryIntoEOperation,
@@ -45,6 +48,10 @@ class MParser {
                         parsed = true;
                         break;
                     }
+                    case PReturnEaten: {
+                            parsed = true;
+                            break;
+                        }
                     case PNotParsed: continue;
                 }
             }

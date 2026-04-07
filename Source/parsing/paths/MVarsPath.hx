@@ -96,7 +96,7 @@ class MVarsPath {
         switch (expression) {
             case PReturnSome(v):
                 variable.expr = v;
-            case PNotParsed:
+            default:
                 variable.expr = null;
         }
 

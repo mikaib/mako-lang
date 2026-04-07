@@ -4,7 +4,6 @@ import parsing.MExprList;
 import parsing.MExpr;
 import parsing.MExprKind;
 import haxe.exceptions.NotImplementedException;
-import haxe.ds.HashMap;
 
 typedef MExprDotData = {
     label: String,
@@ -36,6 +35,10 @@ class MDotCreator {
             case ECall(expr, args):
                 throw new NotImplementedException();
             case EParenthesis(expr):
+                return {
+                    label: 'Parant',
+                    children: [expr],
+                };
                 throw new NotImplementedException();
             case EBlock(exprs):
                 var expressions = exprs.map(e -> e);
@@ -109,7 +112,6 @@ class MDotCreator {
         }
         for (key => value in labelNames) {
             file.writeString('$key[label="$value"]\n');
-            trace('Key: $key, Value: $value');
         }
         file.writeString(End);
         file.close();

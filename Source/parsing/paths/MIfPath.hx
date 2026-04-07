@@ -29,6 +29,7 @@ class MIfPath {
             var control = tryIntoEIf(input);
             eElse = switch (control) {
                 case PReturnSome(v): v;
+                case PReturnEaten: throw new Exception("Error parsing else-if");
                 case PNotParsed: throw new Exception("Error parsing else-if");
             };
         } else {
@@ -36,6 +37,7 @@ class MIfPath {
             var control = tryIntoEBlock(eElseBlockTokens);
             eElse = switch (control) {
                 case PReturnSome(v): v;
+                case PReturnEaten: throw new Exception("Error parsing else");
                 case PNotParsed: throw new Exception("Error parsing else");
             };
         }
@@ -62,6 +64,7 @@ class MIfPath {
         var condition = tryIntoEBlock(condBlock);
         var cond = switch (condition) {
             case PReturnSome(v): v;
+            case PReturnEaten: return PReturnEaten;
             case PNotParsed: return PNotParsed;
         };
 
@@ -69,6 +72,7 @@ class MIfPath {
         var expressionBlock = tryIntoEBlock(exprBlock);
         var expr = switch (expressionBlock) {
             case PReturnSome(v): v;
+            case PReturnEaten: return PReturnEaten;
             case PNotParsed: return PNotParsed;
         };
 
