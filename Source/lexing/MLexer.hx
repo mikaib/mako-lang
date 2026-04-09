@@ -251,10 +251,14 @@ class MLexer {
 
             case "+" if (next.isValue("=")):
                 return {flowControl: LReturnSome(TTokenOperator(OAddAssign)), advanceBy: 1};
+            case "+" if (next.isValue("+")):
+                return {flowControl: LReturnSome(TTokenOperator(OIncrement)), advanceBy: 1};
             case "+": return {flowControl: LReturnSome(TTokenOperator(OPlus)), advanceBy: 0};
 
             case "-" if (next.isValue("=")):
                 return {flowControl: LReturnSome(TTokenOperator(OSubtractAssign)), advanceBy: 1};
+            case "-" if (next.isValue("-")):
+                return {flowControl: LReturnSome(TTokenOperator(ODecrement)), advanceBy: 1};
             case "-": return {flowControl: LReturnSome(TTokenOperator(OMinus)), advanceBy: 0};
 
             default:

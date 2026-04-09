@@ -14,7 +14,6 @@ import haxe.Exception;
 
 class MFunctionPath {
     public static function tryIntoEFunction(input: ArrayView<MToken>): ParserFlowControl {
-        trace(input.map(t -> 't: ${t.kind}}'));
         var readIndex = 0;
         var func = new MFuncDecl();
         var minToken = input[0];

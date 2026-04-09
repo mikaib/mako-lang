@@ -13,18 +13,20 @@ import haxe.Exception;
 class MOperatorPath {
     private static function getPrecedance(op: MTokenOperator):Null<Int> {
         switch(op) {
-            case OMultiply, ODivide:
+            case OIncrement, ODecrement, ONot:
                 return 1;
-            case OPlus, OMinus:
+            case OMultiply, ODivide:
                 return 2;
-            case OLogicalAnd:
+            case OPlus, OMinus:
                 return 3;
-            case OLogicalOr:
+            case OLogicalAnd:
                 return 4;
-            case OEqual, ONotEaqual:
+            case OLogicalOr:
                 return 5;
-            case OLessThen, OGreatherThen:
+            case OEqual, ONotEaqual:
                 return 6;
+            case OLessThen, OGreatherThen:
+                return 7;
             default:
                 throw new Exception('Unexpected operator: $op');
         }
@@ -67,12 +69,18 @@ class MOperatorPath {
         throw new Exception('Unexpected bin operator: $op');
     }
 
-    private static function intoUnOp(op: MTokenOperator):Null<MUnop> {
+    private static function intoUnOp(op: MTokenOperator, post: Bool):Null<MUnop> {
         if (Type.enumEq(op, MTokenOperator.OIncrement)) {
-            return MUnop.Inc;
+            if (post) {
+                return MUnop.PostInc;
+            }
+            return MUnop.PreInc;
         }
         else if (Type.enumEq(op, MTokenOperator.ODecrement)) {
-            return MUnop.Dec;
+            if (post) {
+                return MUnop.PostDec;
+            }
+            return MUnop.PreDec;
         }
         else if (Type.enumEq(op, MTokenOperator.ONot)) {
             return MUnop.Neg;
@@ -95,6 +103,7 @@ class MOperatorPath {
             }
         }
         var firstToken = input[0];
+        trace('EXPR: ${leftAST}, TOKEN: ${firstToken}');
         var firstTokenKind = firstToken?.kind;
         var firstOperator = switch (firstTokenKind) {
             case (TTokenOperator(o)):
@@ -103,6 +112,26 @@ class MOperatorPath {
                 return PNotParsed;
         }
         input.consume(1);
+
+        if (Type.enumEq(firstToken.kind, TTokenOperator(MTokenOperator.OIncrement)) ||
+            Type.enumEq(firstToken.kind, TTokenOperator(MTokenOperator.ODecrement))) {
+            if (leftAST.hasValue()) {
+                var unop = MExprKind.EUnop(leftAST.unwrap(), intoUnOp(firstOperator, true));
+                var expr: MExpr = {
+                    kind: unop,
+                    pos: {
+                        path: firstToken.pos.path,
+                        min: firstToken.pos.min,
+                        max: firstToken.pos.max,
+                    }
+                };
+                if (input.length > 0) {
+                    return makeOperationAST(input, Some(expr));
+                }
+                return PReturnSome(expr);
+            }
+        }
+
         var depth = 0;
         var readIndex = 0;
         while (input.length > readIndex) {
@@ -145,7 +174,7 @@ class MOperatorPath {
             case Some(lExpr):
                 MExprKind.EBinop(lExpr, rExpr, intoBinOp(firstOperator));
             case None:
-                MExprKind.EUnop(rExpr, intoUnOp(firstOperator));
+                MExprKind.EUnop(rExpr, intoUnOp(firstOperator, false));
         }
         var expr: MExpr = {
             kind: op,
@@ -182,93 +211,6 @@ class MOperatorPath {
             default:
         }
         return expr;
-
-        /*
-        var depth = 0;
-        var leftConst = tryIntoEConst(input);
-        var operator = input[0].kind;
-        var precedance = switch (operator) {
-            case (TTokenOperator(o)):
-                getPrecedance(o);
-            default:
-                return PNotParsed;
-        }
-
-        while (input.length > 0) {
-            var eConst = tryIntoEConst(input);
-            var precedance = 0;
-            switch (input[0].kind) {
-                case (TTokenOperator(o)): break;
-                case (TParantOpen): depth++;
-                case (TParantClose): depth--;
-            }
-        }*/
-        // 1 + 2 * 3 + 4 * 5
-        // plus(1, plus(mul(2, 3), mul(4, 5)))
-        // 1 + .............
-        // 2 * 3 + 4 * 5
-        // plus(mul(2, 3), mul(4, 5))
-
-        // 1 * 2 * 3 + 4 * 5
-        // plus(mul(mul(1, 2), 3), mul(4, 5))
-        // 1 * .............
-        // 2 * 3 + 4 * 5
-        // plus(mul(2, 3), mul(4, 5))
-        // 2 * 3 + 4 * 5 + 1
-
-        //-----------------
-        // a = 1 + 2 && 3 + 4 * 5
-        // plus(1, plus(and(2, 3), mul(4, 5)))
-
-        // plus(plus(1, and(2, 3)), mul(4, 5))
-        //-----------------
-
-        //-----------------
-        // a = 1 * 2 + 3 && 4 + 5
-        // plus(plus(mul(1, 2), and(3, 4)), 5)
-        //-----------------
-
-        //-----------------
-        // a = 1 + 2 && 3 && 4 + 5 * 6
-        // plus(plus(1, and(and(2, 3), 4)), mul(5, 6))
-
-        // 1 + and(2, 3) + 4 * 5
-        // plus(1, and(2, 3)) + 4 * 5
-        // plus(LEFT, parse(4 * 5))
-        // plus(plus(1, and(2, 3)), mul(4, 5))
-
-        // plus(plus(1, and(2, 3)), mul(4, 5))
-        //-----------------
-
-        //-----------------
-        // a = 1 * 2 + 3 * 4
-        // plus(mul(1, 2), mul(3, 4))
-
-        // mul(1, 2)
-        // plus(LEFT, parse(3 * 4))
-        // mul(3, 4)
-
-        // plus(mul(1, 2), mul(3, 4))
-        //-----------------
-
-        //-----------------
-        // a = 1 + 3 + 2 && 3 + 4 * 5
-        // and(plus(plus(1, 3), 2), plus(3, mul(4, 5)))
-
-        // plus(1, 3) + 2 && 3 + 4 * 5
-        // plus(LEFT, 2) && 3 + 4 * 5
-        // and(LEFT, parse(3 + 4 * 5))
-        // and(plus(plus(1, 3), 2), plus(3, parse(4 * 5)))
-        // and(plus(plus(1, 3), 2), plus(3, mul(4, 5)))
-
-        // plus(1, 2) && 3 + 4 * 5
-        // and(LEFT, parse(3 + 4 * 5))
-        // 3 + 4 * 5
-        // 3 + mul(4, 5)
-        // plus(3, mul(4, 5))
-
-        // and(plus(1, 2) && mul(plus(3, 4), 5))
-        //-----------------
     }
 }
 

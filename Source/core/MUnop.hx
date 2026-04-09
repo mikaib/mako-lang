@@ -3,6 +3,8 @@ package core;
 enum MUnop {
     Neg; // !
     Min; // -
-    Inc; // ++
-    Dec; // --
+    PreInc; // ++x
+    PreDec; // --x
+    PostInc; // x++
+    PostDec; // x--
 }
