@@ -55,8 +55,22 @@ class Main {
             var c = 12.3;
             var d = !c;
 
-            var e = 3! * ++c + 9++;
+            var e = 3 * ++c + 9++;
             var f = 7 * (1 + 1) / 4;
+
+            var g = if(1) {
+                3
+            } else {
+                4
+            };
+
+            var h = if(2) {
+                3
+            } else if (4) {
+                5
+            } else {
+                4
+            };
 
             func mul(a: i32, b: i32): i64 {
                 var h = 1;

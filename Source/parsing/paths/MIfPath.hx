@@ -24,6 +24,8 @@ class MIfPath {
 
         input.consume(1);
 
+        trace(input.map(t -> '${t.kind}}'));
+
         var eElse: MExpr;
         if (Type.enumEq(input[0].kind, TKeyword(KIf))) {
             var control = tryIntoEIf(input);
@@ -34,6 +36,7 @@ class MIfPath {
             };
         } else {
             var eElseBlockTokens = MParseBlocker.createBlock(input, Some(TBraceOpen), TBraceClose);
+            eElseBlockTokens.consume(1); // Consume '{'
             var control = tryIntoEBlock(eElseBlockTokens);
             eElse = switch (control) {
                 case PReturnSome(v): v;
@@ -41,6 +44,8 @@ class MIfPath {
                 case PNotParsed: throw new Exception("Error parsing else");
             };
         }
+
+        trace('Else parsed: ${eElse.kind}');
 
         switch (currentIf.kind) {
             case EIf(cond, eif, _):
@@ -69,6 +74,7 @@ class MIfPath {
         };
 
         var exprBlock = MParseBlocker.createBlock(input, Some(TBraceOpen), TBraceClose);
+        exprBlock.consume(1); // Consume '{'
         var expressionBlock = tryIntoEBlock(exprBlock);
         var expr = switch (expressionBlock) {
             case PReturnSome(v): v;

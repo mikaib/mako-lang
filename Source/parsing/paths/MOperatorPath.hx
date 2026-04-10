@@ -35,10 +35,29 @@ class MOperatorPath {
     private static function makeExpressionBlock(input: ArrayView<MToken>): ParserFlowControl {
         var index = 0;
         var run = true;
-        while (input.length - 1 > index && run) {
+        var parantDepth = 0;
+        var blockDepth = 0;
+        while (input.length > index && run) {
             switch (input[index].kind) {
                 case MTokenKind.TTokenOperator(_):
-                    run = false;
+                    if (parantDepth == 0 && blockDepth == 0) {
+                        run = false;
+                    }
+                    else {
+                        index++;
+                    }
+                case TBraceClose:
+                    blockDepth -= 1;
+                    index++;
+                case TBraceOpen:
+                    blockDepth += 1;
+                    index++;
+                case TParantOpen:
+                    parantDepth += 1;
+                    index++;
+                case TParantClose:
+                    parantDepth -= 1;
+                    index++;
                 default:
                     index++;
             }
@@ -49,6 +68,7 @@ class MOperatorPath {
         }
 
         var block = input.subslice(0, index);
+        trace(block.map(t -> '${t.kind}'));
         input.consume(index);
         return tryIntoEBlock(block);
     }
@@ -93,7 +113,6 @@ class MOperatorPath {
 
     private static function makeOperationAST(input: ArrayView<MToken>, leftAST: MOption<MExpr>): ParserFlowControl {
         if (leftAST == None) {
-            trace(input.map(t -> 't: ${t.kind}'));
             var expr = makeExpressionBlock(input);
             switch(expr) {
                 case PReturnSome(ast):
@@ -103,7 +122,6 @@ class MOperatorPath {
             }
         }
         var firstToken = input[0];
-        trace('EXPR: ${leftAST}, TOKEN: ${firstToken}');
         var firstTokenKind = firstToken?.kind;
         var firstOperator = switch (firstTokenKind) {
             case (TTokenOperator(o)):
@@ -191,7 +209,47 @@ class MOperatorPath {
         return PReturnSome(expr);
     }
 
+    // Is an operator EXPR if there is an operator Token in the stream in a depth of 0.
+    // So 1 + 1 is true
+    // if(1 + 1) is false
+    // But (1 + 1) is also false, will parse paranthesis first.
+    private static function IsOperator(input: ArrayView<MToken>): Bool {
+        var index = 0;
+        var parantDepth = 0;
+        var blockDepth = 0;
+        while (input.length > index) {
+            switch (input[index].kind) {
+                case MTokenKind.TTokenOperator(_):
+                    if (parantDepth == 0 && blockDepth == 0) {
+                        return true;
+                    }
+                    else {
+                        index++;
+                    }
+                case TBraceClose:
+                    blockDepth -= 1;
+                    index++;
+                case TBraceOpen:
+                    blockDepth += 1;
+                    index++;
+                case TParantOpen:
+                    parantDepth += 1;
+                    index++;
+                case TParantClose:
+                    parantDepth -= 1;
+                    index++;
+                default:
+                    index++;
+            }
+        }
+        return false;
+    }
+
     public static function tryIntoEOperation(input: ArrayView<MToken>): ParserFlowControl {
+        if (!IsOperator(input)) {
+            return PNotParsed;
+        }
+
         var readIndex = 0;
         var depth = 0;
         while (readIndex < input.length) {
