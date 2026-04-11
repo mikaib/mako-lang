@@ -23,10 +23,8 @@ class MOperatorPath {
                 return 4;
             case OLogicalOr:
                 return 5;
-            case OEqual, ONotEaqual:
+            case ONotEaqual, OEqual, OGreatherThen, OGreaterThenEqualTo, OLessThen, OLessThenEqualTo:
                 return 6;
-            case OLessThen, OGreatherThen:
-                return 7;
             default:
                 throw new Exception('Unexpected operator: $op');
         }
@@ -74,20 +72,26 @@ class MOperatorPath {
     }
 
     private static function intoBinOp(op: MTokenOperator): Null<MBinop> {
-        if (Type.enumEq(op, MTokenOperator.OPlus)) {
-            return MBinop.Add;
+        final table = [
+            MTokenOperator.OPlus => MBinop.Add,
+            MTokenOperator.OMinus => MBinop.Sub,
+            MTokenOperator.OMultiply => MBinop.Mul,
+            MTokenOperator.ODivide => MBinop.Divide,
+            MTokenOperator.ONotEaqual => MBinop.NotEqual,
+            MTokenOperator.OEqual => MBinop.Equal,
+            MTokenOperator.OGreatherThen => MBinop.GreaterThen,
+            MTokenOperator.OGreaterThenEqualTo => MBinop.GreaterThenEqualTo,
+            MTokenOperator.OLessThen => MBinop.LessThen,
+            MTokenOperator.OLessThenEqualTo => MBinop.LessThenEqualTo
+        ];
+
+        final result = table[op];
+        if (result == null) {
+            throw new Exception('Unexpected bin operator: $op');
         }
-        else if (Type.enumEq(op, MTokenOperator.OMinus)) {
-            return MBinop.Sub;
-        }
-        else if (Type.enumEq(op, MTokenOperator.OMultiply)) {
-            return MBinop.Mul;
-        }
-        else if (Type.enumEq(op, MTokenOperator.ODivide)) {
-            return MBinop.Divide;
-        }
-        throw new Exception('Unexpected bin operator: $op');
+        return result;
     }
+
 
     private static function intoUnOp(op: MTokenOperator, post: Bool):Null<MUnop> {
         if (Type.enumEq(op, MTokenOperator.OIncrement)) {

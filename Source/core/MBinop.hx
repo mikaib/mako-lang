@@ -5,4 +5,10 @@ enum MBinop {
     Sub;
     Mul;
     Divide;
+    Equal;
+    NotEqual;
+    GreaterThen;
+    GreaterThenEqualTo;
+    LessThen;
+    LessThenEqualTo;
 }

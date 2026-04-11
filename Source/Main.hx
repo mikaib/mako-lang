@@ -58,16 +58,16 @@ class Main {
             var e = 3 * ++c + 9++;
             var f = 7 * (1 + 1) / 4;
 
-            var g = if(1) {
+            var g = if(1 == 1) {
                 3
             } else {
                 4
             };
 
-            var h = if(2) {
+            var h = if(2 * f < g + 1) {
                 3
-            } else if (4) {
-                5
+            } else if (4 >= 9) {
+                5 + 4
             } else {
                 4
             };
