@@ -54,6 +54,7 @@ class MTypeSystem {
 
             case EConst(CIdent(name)): null; // TODO: impl
             case EConst(_): null;
+            default: throw new NotImplementedException(); // TODO: impl all expr kinds
         }
     }
 
