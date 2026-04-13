@@ -123,7 +123,7 @@ class MIRC {
             case _: null;
         }
 
-        return StringTools.rpad('$line;', ' ', 80) + '/* ${inst.kind} ${inst.data.join(' ')} */';
+        return StringTools.rpad('$line;', ' ', 80) + '/* ${inst.result.register != -1 ? "$" + '${inst.result.register}: ${inst.result.type.toString()} = ' : ''}${inst.kind} ${inst.data.join(' ')} */';
     }
 
 }
