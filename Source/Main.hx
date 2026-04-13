@@ -17,14 +17,35 @@ class Main {
                 kind: EBlock([
                     {
                         pos: null,
+                        kind: EVars([
+                            {
+                                name: "test",
+                                type: MType.mono()
+                            }
+                        ])
+                    },
+                    {
+                        pos: null,
                         kind: EBinop({
-                            pos: null,
-                            kind: EConst(CFloat("5.0")),
-                            type: MType.make("f32")
-                        }, {
                             pos: null,
                             kind: EConst(CIdent("test")),
                             type: MType.mono()
+                        }, {
+                            pos: null,
+                            kind: EConst(CFloat("1.5")),
+                            type: MType.make("f64")
+                        }, MBinop.Assign)
+                    },
+                    {
+                        pos: null,
+                        kind: EBinop({
+                            pos: null,
+                            kind: EConst(CIdent("test")),
+                            type: MType.mono()
+                        }, {
+                            pos: null,
+                            kind: EConst(CFloat("1.5")),
+                            type: MType.make("f32")
                         }, MBinop.Mul)
                     }
                 ]),
@@ -32,10 +53,14 @@ class Main {
             }
         ];
 
-        var typer = new MTypeSystem(ast);
+        // Iw + Fq = Fmax(w, q)
+        // Iw + Fq = Fmax(w, q) + 1 // 128
+
+        var context: Context = {};
+        var typer = new MTypeSystem(ast, context);
         typer.run();
 
-        //trace(ast);
+        trace(ast);
 
         /*var code = "
             const x:i32= 0;

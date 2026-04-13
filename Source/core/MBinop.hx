@@ -17,4 +17,12 @@ enum MBinop {
     BitOr;
     BitAnd;
     BitXor;
+    Equal;
+    NotEqual;
+    LessThan;
+    GreaterThan;
+    EqualGreaterThan;
+    EqualLessThan;
+    Assign;
+    AssignOp(op: MBinop);
 }
