@@ -4,11 +4,17 @@ enum MBinop {
     Add;
     Sub;
     Mul;
-    Divide;
-    Equal;
-    NotEqual;
+    Eq;
+    NotEq;
     GreaterThen;
     GreaterThenEqualTo;
     LessThen;
     LessThenEqualTo;
+    Div;
+    Mod;
+    Or;
+    And;
+    BitOr;
+    BitAnd;
+    BitXor;
 }
