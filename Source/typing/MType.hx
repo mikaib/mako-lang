@@ -45,6 +45,10 @@ class MType {
         return make("arr", [inner]);
     }
 
+    public static function string(): MType {
+        return make("str");
+    }
+
     private function new(c: MConcreteType) {
         concrete = c;
     }

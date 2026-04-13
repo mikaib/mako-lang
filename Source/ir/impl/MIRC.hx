@@ -33,6 +33,7 @@ class MIRC {
 
         for (func in _program) {
             buf.add(emitFunction(func));
+            buf.add("\n");
         }
 
         return buf.toString();
@@ -91,6 +92,8 @@ class MIRC {
             return 'void';
         }
 
+        // TODO: strings and arrays
+
         throw 'unsupported type: ${c.name}';
     }
 
@@ -123,7 +126,7 @@ class MIRC {
             case _: null;
         }
 
-        return StringTools.rpad('$line;', ' ', 80) + '/* ${inst.result.register != -1 ? "$" + '${inst.result.register}: ${inst.result.type.toString()} = ' : ''}${inst.kind} ${inst.data.join(' ')} */';
+        return StringTools.rpad('$line;', ' ', 60) + '/* ${inst.result.register != -1 ? "$" + '${inst.result.register}: ${inst.result.type.toString()} = ' : ''}${inst.kind} ${inst.data.join(' ')} */';
     }
 
 }

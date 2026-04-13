@@ -70,6 +70,11 @@ class Main {
         var code = emitter.emitModule();
         trace(code);
 
+        var validator = new ir.impl.MIRValidator(ir);
+        var issues = validator.validate();
+        trace('TOTAL OF ${issues.length} ISSUES IN IR!');
+        trace(issues.map(x -> '- $x').join('\n'));
+
         return;
         var ast: MExprList = [
             {
