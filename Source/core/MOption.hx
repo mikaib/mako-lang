@@ -20,4 +20,11 @@ abstract MOption<T>(MOptionKind<T>) from MOptionKind<T> to MOptionKind<T> {
         }
     }
 
+    public function isNone(): Bool {
+        return switch this {
+            case Some(_): false;
+            case None: true;
+        }
+    }
+
 }
