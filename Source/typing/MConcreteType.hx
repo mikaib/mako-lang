@@ -66,4 +66,8 @@ class MConcreteType {
         return isInt() || isUInt() || isFloat();
     }
 
+    public function isVoid(): Bool {
+        return name == "void";
+    }
+
 }

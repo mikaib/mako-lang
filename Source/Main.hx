@@ -48,10 +48,11 @@ class Main {
             },
             {
                 name: "main",
+                returnType: MType.int(32),
                 instructions: [
                     {
                         kind: MIRInstructionKind.Call,
-                        data: [MIROperand.Function("add"), MIROperand.Int(5), MIROperand.Register(0)],
+                        data: [MIROperand.Function("add"), MIROperand.Int(5), MIROperand.Int(5)],
                         result: {
                             register: 0,
                             type: MType.float(32)
@@ -64,6 +65,10 @@ class Main {
                 ]
             }
         ];
+
+        var emitter = new ir.impl.MIRC(ir);
+        var code = emitter.emitModule();
+        trace(code);
 
         return;
         var ast: MExprList = [
