@@ -93,23 +93,17 @@ class MOperatorPath {
     }
 
 
-    private static function intoUnOp(op: MTokenOperator, post: Bool):Null<MUnop> {
-        if (Type.enumEq(op, MTokenOperator.OIncrement)) {
-            if (post) {
-                return MUnop.PostInc;
-            }
-            return MUnop.PreInc;
+    private static function intoUnOp(op: MTokenOperator):Null<MUnop> {
+        if (op.match(MTokenOperator.OIncrement)) {
+            return MUnop.Inc;
         }
-        else if (Type.enumEq(op, MTokenOperator.ODecrement)) {
-            if (post) {
-                return MUnop.PostDec;
-            }
-            return MUnop.PreDec;
+        else if (op.match(MTokenOperator.ODecrement)) {
+            return MUnop.Dec;
         }
-        else if (Type.enumEq(op, MTokenOperator.ONot)) {
+        else if (op.match(MTokenOperator.ONot)) {
             return MUnop.Neg;
         }
-        else if (Type.enumEq(op, MTokenOperator.OMinus)) {
+        else if (op.match(MTokenOperator.OMinus)) {
             return MUnop.Min;
         }
         throw new Exception('Unexpected unop operator: $op');
@@ -135,10 +129,10 @@ class MOperatorPath {
         }
         input.consume(1);
 
-        if (Type.enumEq(firstToken.kind, TTokenOperator(MTokenOperator.OIncrement)) ||
-            Type.enumEq(firstToken.kind, TTokenOperator(MTokenOperator.ODecrement))) {
+        if (firstToken.kind.match(TTokenOperator(MTokenOperator.OIncrement)) ||
+            firstToken.kind.match(TTokenOperator(MTokenOperator.ODecrement))) {
             if (leftAST.hasValue()) {
-                var unop = MExprKind.EUnop(leftAST.unwrap(), intoUnOp(firstOperator, true));
+                var unop = MExprKind.EUnop(leftAST.unwrap(), intoUnOp(firstOperator), false);
                 var expr: MExpr = {
                     kind: unop,
                     pos: {
@@ -157,10 +151,10 @@ class MOperatorPath {
         var depth = 0;
         var readIndex = 0;
         while (input.length > readIndex) {
-            if (Type.enumEq(input[readIndex].kind, TParantOpen)) {
+            if (input[readIndex].kind.match(TParantOpen)) {
                 depth++;
             }
-            else if (Type.enumEq(input[readIndex].kind, TParantClose)) {
+            else if (input[readIndex].kind.match(TParantClose)) {
                 depth--;
             }
 
@@ -196,7 +190,7 @@ class MOperatorPath {
             case Some(lExpr):
                 MExprKind.EBinop(lExpr, rExpr, intoBinOp(firstOperator));
             case None:
-                MExprKind.EUnop(rExpr, intoUnOp(firstOperator, false));
+                MExprKind.EUnop(rExpr, intoUnOp(firstOperator), true);
         }
         var expr: MExpr = {
             kind: op,

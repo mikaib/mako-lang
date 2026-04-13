@@ -23,9 +23,9 @@ class MDotCreator {
                     label: 'BinOp ${op}',
                     children: [left, right],
                 };
-            case EUnop(expr, op):
+            case EUnop(expr, op, is_pre):
                 return {
-                    label: 'UnOp ${op}',
+                    label: 'UnOp ${op}, pre: ${is_pre}',
                     children: [expr],
                 };
             case EArrayAccess(expr, index):

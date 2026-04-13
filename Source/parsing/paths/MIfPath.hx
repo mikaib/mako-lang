@@ -13,7 +13,7 @@ import haxe.Exception;
 class MIfPath {
 
     private static function parseElse(input: ArrayView<MToken>, currentIf: MExpr): MExpr {
-        if (input.length == 0 || !Type.enumEq(input[0].kind, TKeyword(KElse))) {
+        if (input.length == 0 || !input[0].kind.match(TKeyword(KElse))) {
             switch (currentIf.kind) {
                 case EIf(cond, eif, _):
                     currentIf.kind = EIf(cond, eif, None);
@@ -27,7 +27,7 @@ class MIfPath {
         trace(input.map(t -> '${t.kind}}'));
 
         var eElse: MExpr;
-        if (Type.enumEq(input[0].kind, TKeyword(KIf))) {
+        if (input[0].kind.match(TKeyword(KIf))) {
             var control = tryIntoEIf(input);
             eElse = switch (control) {
                 case PReturnSome(v): v;
@@ -57,7 +57,7 @@ class MIfPath {
     }
 
     public static function tryIntoEIf(input: ArrayView<MToken>): ParserFlowControl {
-        if (input.length == 0 || !Type.enumEq(input[0].kind, TKeyword(KIf))) {
+        if (input.length == 0 || !input[0].kind.match(TKeyword(KIf))) {
             return PNotParsed;
         }
 

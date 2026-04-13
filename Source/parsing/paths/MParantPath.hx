@@ -9,7 +9,7 @@ import parsing.MExprKind.EBlock;
 
 class MParantPath {
     public static function tryIntoEParants(input: ArrayView<MToken>): ParserFlowControl {
-        if (!Type.enumEq(input[0]?.kind, TParantOpen)) {
+        if (!input[0]?.kind.match(TParantOpen)) {
             return PNotParsed;
         }
 

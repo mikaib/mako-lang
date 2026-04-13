@@ -82,7 +82,7 @@ class MVarsPath {
                 variable.type = MType.mono();
         }
 
-        if (!Type.enumEq(input[readIndex].kind, TTokenOperator(OAssign))) {
+        if (!input[readIndex].kind.match(TTokenOperator(OAssign))) {
             throw new Exception('Expected =, got ${input[readIndex].kind}');
         }
         readIndex++;

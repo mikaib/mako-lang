@@ -33,7 +33,7 @@ class MFunctionPath {
         }
 
         // Is function
-        if(!Type.enumEq(input[readIndex].kind, TKeyword(KFunc))) {
+        if(!input[readIndex].kind.match(TKeyword(KFunc))) {
             return PNotParsed;
         }
         readIndex += 1;
@@ -70,7 +70,7 @@ class MFunctionPath {
                     return PNotParsed;
             }
 
-            if (!Type.enumEq(argBlock[0].kind, TComma)) {
+            if (!argBlock[0].kind.match(TComma)) {
                 break;
             }
             argBlock.consume(1);

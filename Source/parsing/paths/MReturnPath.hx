@@ -9,7 +9,7 @@ import haxe.Exception;
 
 class MReturnPath {
     public static function tryIntoEReturn(input: ArrayView<MToken>): ParserFlowControl {
-        if (input.length == 0 || !Type.enumEq(input[0].kind, TKeyword(KReturn))) {
+        if (input.length == 0 || !input[0].kind.match(TKeyword(KReturn))) {
             return PNotParsed;
         }
 
