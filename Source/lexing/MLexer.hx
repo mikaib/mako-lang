@@ -7,6 +7,8 @@ import core.MConst;
 import lexing.MTokenKind.MTokenOperator;
 import lexing.MTokenKind.MTokenKeyword;
 import core.MPositionRange;
+import core.MBinop;
+import haxe.Exception;
 
 typedef MControlFunc = (String, MOption<MChar>) -> LexerFlowControl;
 
@@ -203,67 +205,51 @@ class MLexer {
         return {flowControl: LAdvance, advanceBy: 0};
     }
 
+    final table = [
+        "<=" => MTokenOperator.OLessThenEqualTo,
+        "<<" => MTokenOperator.OShiftLeft,
+        "<" => MTokenOperator.OLessThen,
+        ">=" => MTokenOperator.OGreaterThenEqualTo,
+        ">>" => MTokenOperator.OShiftRight,
+        ">" => MTokenOperator.OGreatherThen,
+        "==" => MTokenOperator.OEqual,
+        "=" => MTokenOperator.OAssign,
+        "!=" => MTokenOperator.ONotEaqual,
+        "!" => MTokenOperator.ONot,
+        "||" => MTokenOperator.OLogicalOr,
+        "|=" => MTokenOperator.OOrAssign,
+        "|" => MTokenOperator.OBitwiseOr,
+        "^=" => MTokenOperator.OXorAssign,
+        "^" => MTokenOperator.OBitwiseXor,
+        "&&" => MTokenOperator.OLogicalAnd,
+        "&=" => MTokenOperator.OAndAssign,
+        "&" => MTokenOperator.OBitwiseAnd,
+        "*=" => MTokenOperator.OMultiplyAssign,
+        "*" => MTokenOperator.OMultiply,
+        "/=" => MTokenOperator.ODivideAssign,
+        "/" => MTokenOperator.ODivide,
+        "+=" => MTokenOperator.OAddAssign,
+        "++" => MTokenOperator.OIncrement,
+        "+" => MTokenOperator.OPlus,
+        "-=" => MTokenOperator.OSubtractAssign,
+        "--" => MTokenOperator.ODecrement,
+        "-" => MTokenOperator.OMinus,
+    ];
+
     private function intoOperator(stringToken: String, next: MOption<MChar>): LexerFlowControl {
-        switch (stringToken) {
-            case "<" if (next.isValue("=")):
-                return {flowControl: LReturnSome(TTokenOperator(OLessThenEqualTo)), advanceBy: 1};
-            case "<" if (next.isValue("<")):
-                return {flowControl: LReturnSome(TTokenOperator(OShiftLeft)), advanceBy: 1};
-            case "<": return {flowControl: LReturnSome(TTokenOperator(OLessThen)), advanceBy: 0};
-
-            case ">" if (next.isValue("=")):
-                return {flowControl: LReturnSome(TTokenOperator(OGreaterThenEqualTo)), advanceBy: 1};
-            case ">" if (next.isValue(">")):
-                return {flowControl: LReturnSome(TTokenOperator(OShiftRight)), advanceBy: 1};
-            case ">": return {flowControl: LReturnSome(TTokenOperator(OGreatherThen)), advanceBy: 0};
-
-            case "=" if (next.isValue("=")):
-                return {flowControl: LReturnSome(TTokenOperator(OEqual)), advanceBy: 1};
-            case "=": return {flowControl: LReturnSome(TTokenOperator(OAssign)), advanceBy: 0};
-
-            case "!" if (next.isValue("=")):
-                return {flowControl: LReturnSome(TTokenOperator(ONotEaqual)), advanceBy: 1};
-            case "!": return {flowControl: LReturnSome(TTokenOperator(ONot)), advanceBy: 0};
-
-            case "|" if (next.isValue("|")):
-                return {flowControl: LReturnSome(TTokenOperator(OLogicalOr)), advanceBy: 1};
-            case "|" if (next.isValue("=")):
-                return {flowControl: LReturnSome(TTokenOperator(OOrAssign)), advanceBy: 1};
-            case "|": return {flowControl: LReturnSome(TTokenOperator(OBitwiseOr)), advanceBy: 0};
-
-            case "^" if (next.isValue("=")):
-                return {flowControl: LReturnSome(TTokenOperator(OXorAssign)), advanceBy: 1};
-            case "^": return {flowControl: LReturnSome(TTokenOperator(OBitwiseXor)), advanceBy: 0};
-
-            case "&" if (next.isValue("&")):
-                return {flowControl: LReturnSome(TTokenOperator(OLogicalAnd)), advanceBy: 1};
-            case "&" if (next.isValue("=")):
-                return {flowControl: LReturnSome(TTokenOperator(OAndAssign)), advanceBy: 1};
-            case "&": return {flowControl: LReturnSome(TTokenOperator(OBitwiseAnd)), advanceBy: 0};
-
-            case "*" if (next.isValue("=")):
-                return {flowControl: LReturnSome(TTokenOperator(OMultiplyAssign)), advanceBy: 1};
-            case "*": return {flowControl: LReturnSome(TTokenOperator(OMultiply)), advanceBy: 0};
-
-            case "/" if (next.isValue("=")):
-                return {flowControl: LReturnSome(TTokenOperator(ODivideAssign)), advanceBy: 1};
-            case "/": return {flowControl: LReturnSome(TTokenOperator(ODivide)), advanceBy: 0};
-
-            case "+" if (next.isValue("=")):
-                return {flowControl: LReturnSome(TTokenOperator(OAddAssign)), advanceBy: 1};
-            case "+" if (next.isValue("+")):
-                return {flowControl: LReturnSome(TTokenOperator(OIncrement)), advanceBy: 1};
-            case "+": return {flowControl: LReturnSome(TTokenOperator(OPlus)), advanceBy: 0};
-
-            case "-" if (next.isValue("=")):
-                return {flowControl: LReturnSome(TTokenOperator(OSubtractAssign)), advanceBy: 1};
-            case "-" if (next.isValue("-")):
-                return {flowControl: LReturnSome(TTokenOperator(ODecrement)), advanceBy: 1};
-            case "-": return {flowControl: LReturnSome(TTokenOperator(OMinus)), advanceBy: 0};
-
-            default:
-                return {flowControl: LAdvance, advanceBy: 0};
+        if (next.hasValue()) {
+            final result = table['${stringToken}${next.unwrap()}'];
+            if (result != null) {
+                return {flowControl: LReturnSome(TTokenOperator(result)), advanceBy: 1};
+            }
         }
+
+        final result = table['${stringToken}'];
+        if (result != null) {
+            return {flowControl: LReturnSome(TTokenOperator(result)), advanceBy: 0};
+        }
+
+        return {flowControl: LAdvance, advanceBy: 0};
     }
 
     private function intoToken(stringToken: String, next: MOption<MChar>): LexerFlowControl {
