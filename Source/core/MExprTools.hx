@@ -18,7 +18,7 @@ class MExprTools {
             case EBinop(e0, e1, _), EArrayAccess(e0, e1), EWhile(e0, e1): invoke(e0); invoke(e1);
             case EIf(e0, e1, e2): invoke(e0); invoke(e1); if (e2.hasValue()) invoke(e2.unwrap());
             case ECall(e0, list): invoke(e0); for (e in list) invoke(e);
-            case EVars(decl): if (decl.expr != null) invoke(decl.expr);
+            case EVars(decls): for (d in decls) if (d.expr != null) invoke(d.expr);
             case EConst(_), EBreak, EContinue, EFunction(_): null;
         }
 

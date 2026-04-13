@@ -6,7 +6,7 @@ import parsing.MExpr;
 @:structInit
 class MVarDecl {
     public var const: Bool = false;
-    public var names: Array<String> = [];
+    public var name: String = "";
     public var type: MType = MType.mono();
     public var expr: Null<MExpr> = null;
     public var access: MAccessLevel = APrivate;
@@ -19,6 +19,6 @@ class MVarDecl {
 //        "type: " + Std.string(type) + ", \n" +
 //        "expr: " + (if (expr != null) Std.string(expr) else "null") +
 //        "\n}";
-        return 'MVarDecl(const=${const}, names=[${names.join(", ")}], type=${type}, expr=${if (expr != null) Std.string(expr) else "null"}, access=${access})';
+        return 'MVarDecl(const=${const}, name=${name}, type=${type}, expr=${if (expr != null) Std.string(expr) else "null"}, access=${access})';
     }
 }

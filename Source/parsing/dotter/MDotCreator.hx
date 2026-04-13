@@ -67,11 +67,25 @@ class MDotCreator {
                     label: 'if',
                     children: expressions,
                 };
-            case EVars(decl):
+            case EVars(decls):
+                if (decls.length == 1) {
+                    var d = decls[0];
+                    return {
+                        label: '${d.access} ${d.const == true ? "const " : ""}${d.name}: ${d.type}',
+                        children: d.expr != null ? [d.expr] : [],
+                    }
+                }
+
+                var sub: MExprList = []; // nasty hack
+                for (d in decls) {
+                    sub.push({ kind: EVars([ d ]), pos: null });
+                }
+
                 return {
-                    label: '${decl.access} ${decl.const == true ? "const" : ""} var ${decl.names}: ${decl.type}',
-                    children: [decl.expr],
+                    label: 'vars',
+                    children: sub,
                 };
+
             case EConst(const):
                 return {
                     label: 'const: ${const}',

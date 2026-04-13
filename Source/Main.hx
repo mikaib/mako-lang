@@ -17,9 +17,12 @@ class Main {
                 kind: EBlock([
                     {
                         pos: null,
-                        kind: EVars({
-                            names: ["test"]
-                        })
+                        kind: EVars([
+                            {
+                                name: "test",
+                                type: MType.mono(),
+                            }
+                        ])
                     },
                     {
                         pos: null,

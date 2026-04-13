@@ -125,12 +125,15 @@ class MTypeSystem {
                 for (e in list) makeConstraints(e, blockScope);
                 unify(expr.type, list.last().type);
 
-            case EVars(decl):
-                scope.defineVariable(decl);
-                unify(decl.type, expr.type);
-                if (decl.expr != null) {
-                    makeConstraints(decl.expr, scope);
-                    unify(decl.type, decl.expr.type);
+            case EVars(decls):
+                unify(decls[decls.length - 1].type, expr.type); // last decl is the block's type
+
+                for (d in decls) {
+                    scope.defineVariable(d);
+                    if (d.expr != null) {
+                        makeConstraints(d.expr, scope);
+                        unify(d.type, d.expr.type);
+                    }
                 }
 
             case EConst(CIdent(name)):
@@ -155,7 +158,7 @@ class MTypeSystem {
         expr.type = subst.apply(expr.type);
 
         switch expr.kind {
-            case EVars(decl): decl.type = subst.apply(decl.type);
+            case EVars(decls): for (d in decls) d.type = subst.apply(d.type);
             case _: null;
         }
     }
