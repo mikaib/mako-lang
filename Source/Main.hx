@@ -8,10 +8,64 @@ import lexing.MLexer;
 import parsing.MParser;
 import core.MArrayView.ArrayView;
 import parsing.dotter.MDotCreator;
+import ir.MIRProgram;
+import ir.MIRInstructionKind;
+import ir.MIROperand;
 
 class Main {
 
     public static function main() {
+        var ir: MIRProgram = [
+            {
+                name: "add",
+                parameters: [
+                    { name: "x", register: 0, type: MType.int(32) },
+                    { name: "y", register: 1, type: MType.int(32) }
+                ],
+                returnType: MType.float(32),
+                instructions: [
+                    {
+                        kind: MIRInstructionKind.Add,
+                        data: [MIROperand.Register(0), MIROperand.Register(1)],
+                        result: {
+                            register: 2,
+                            type: MType.int(32)
+                        }
+                    },
+                    {
+                        kind: MIRInstructionKind.Cast,
+                        data: [MIROperand.Register(2), MIROperand.Type(MType.float(32))],
+                        result: {
+                            register: 3,
+                            type: MType.float(32)
+                        }
+                    },
+                    {
+                        kind: MIRInstructionKind.Return,
+                        data: [MIROperand.Register(3)]
+                    }
+                ]
+            },
+            {
+                name: "main",
+                instructions: [
+                    {
+                        kind: MIRInstructionKind.Call,
+                        data: [MIROperand.Function("add"), MIROperand.Int(5), MIROperand.Register(0)],
+                        result: {
+                            register: 0,
+                            type: MType.float(32)
+                        }
+                    },
+                    {
+                        kind: MIRInstructionKind.Return,
+                        data: [MIROperand.Register(0)]
+                    }
+                ]
+            }
+        ];
+
+        return;
         var ast: MExprList = [
             {
                 kind: EBlock([
