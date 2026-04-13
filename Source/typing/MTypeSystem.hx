@@ -4,6 +4,7 @@ import parsing.MExprList;
 import parsing.MExpr;
 import core.MExprTools;
 import error.MErrorKind;
+import core.MOptionKind;
 
 class MTypeSystem {
 
@@ -120,7 +121,6 @@ class MTypeSystem {
             case EBlock(list):
                 unify(expr.type, list.last().type);
 
-            case EConst(CIdent(name)): null;
             case EConst(_): null;
 
             case _: trace('unhandeled $expr'); null;

@@ -10,9 +10,7 @@ class MExprTools {
     }
 
     private static function _iterateExpr(expr: MExpr, callback: MExpr->Void, recursive: Bool = false): Void {
-        final invoke = (e: MExpr) -> {
-            if (recursive) _iterateExpr(e, callback, recursive);
-        };
+        final invoke = callback;
 
         switch expr.kind {
             case EBlock(list), EArrayDecl(list): for (e in list) invoke(e);
@@ -23,8 +21,6 @@ class MExprTools {
             case EVars(decls): for (d in decls) if (d.expr != null) invoke(d.expr);
             case EConst(_), EBreak, EContinue, EFunction(_): null;
         }
-
-        callback(expr);
     }
 
     public static extern inline overload function iterate(list: MExprList, callback: MExpr->Void, recursive: Bool = false): Void {
