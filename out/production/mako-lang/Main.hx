@@ -7,7 +7,6 @@ import typing.MType;
 import lexing.MLexer;
 import parsing.MParser;
 import core.MArrayView.ArrayView;
-import parsing.dotter.MDotCreator;
 
 class Main {
 
@@ -51,29 +50,12 @@ class Main {
         ";*/
 
         var code = "
-            protected const var a, b: i64 = 0;
-            var c = 12.3;
-            var d = !c;
-
-            var e = 3 * ++c + 9++;
-            var f = 7 * (1 + 1) / 4;
-
-            var g = if(1 == 1) {
-                3
-            } else {
-                4
-            };
-
-            var h = if(2 * f < g + 1) {
-                3
-            } else if (4 >= 9) {
-                5 + 4
-            } else {
-                4
-            };
+            protected const var x, y: i64 = 0;
+            var z = 12.3;
+            var u = !z;
 
             func mul(a: i32, b: i32): i64 {
-                var h = 1;
+                var g = 1;
             }
 
             func main() {
@@ -87,8 +69,6 @@ class Main {
 
         var parser = new MParser(new ArrayView(tokens));
         var ast = parser.parseTree();
-        var dotter = new MDotCreator();
-        dotter.fromAST(ast);
         trace(ast.map(t -> '\n$t'));
     }
 

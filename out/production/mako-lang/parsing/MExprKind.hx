@@ -10,7 +10,7 @@ import core.MOption;
 
 enum MExprKind {
     EBinop(left: MExpr, right: MExpr, op: MBinop);
-    EUnop(expr: MExpr, op: MUnop, prefix: Bool);
+    EUnop(expr: MExpr, op: MUnop);
     EArrayAccess(expr: MExpr, index: MExpr);
     EArrayDecl(values: MExprList);
     ECall(expr: MExpr, args: MExprList);
