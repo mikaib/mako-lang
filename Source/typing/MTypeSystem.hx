@@ -19,7 +19,7 @@ class MTypeSystem {
     }
 
     public function run(): Void {
-        for (e in _root) makeConstraintsIter(e, {});
+        for (e in _root) makeConstraints(e, {});
         solveConstraints();
         MExprTools.iterate(_root, applySubst);
     }
@@ -117,16 +117,33 @@ class MTypeSystem {
                 unify(e0.type, r);
                 unify(e1.type, r);
                 unify(expr.type, r);
+                makeConstraints(e0, scope);
+                makeConstraints(e1, scope);
 
             case EBlock(list):
+                var blockScope = scope.copy();
+                for (e in list) makeConstraints(e, blockScope);
                 unify(expr.type, list.last().type);
 
-            case EConst(_): null;
+            case EVars(decl):
+                scope.defineVariable(decl);
+                unify(decl.type, expr.type);
+                if (decl.expr != null) {
+                    makeConstraints(decl.expr, scope);
+                    unify(decl.type, decl.expr.type);
+                }
 
-            case _: trace('unhandeled $expr'); null;
+            case EConst(CIdent(name)):
+                switch scope.findVariable(name) {
+                    case Some(decl): unify(expr.type, decl.type);
+                    case None: _context.emitError(MErrorKind.TyperInvalidScope, [name]);
+                }
+
+            case EConst(_):
+
+            case _:
+                trace('unhandled $expr');
         }
-
-        makeConstraintsIter(expr, scope.copy());
     }
 
     public function makeConstraintsIter(expr: MExpr, scope: MTypingScope): Void {
@@ -136,6 +153,11 @@ class MTypeSystem {
 
     public function applySubst(expr: MExpr): Void {
         expr.type = subst.apply(expr.type);
+
+        switch expr.kind {
+            case EVars(decl): decl.type = subst.apply(decl.type);
+            case _: null;
+        }
     }
 
 }

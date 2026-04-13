@@ -3,6 +3,7 @@ package core;
 import typing.MType;
 import parsing.MExpr;
 
+@:structInit
 class MVarDecl {
     public var const: Bool = false;
     public var names: Array<String> = [];
@@ -11,14 +12,13 @@ class MVarDecl {
     public var access: MAccessLevel = APrivate;
 
     public function toString(): String {
-        return "MVarDecl { \n" +
-        "access: " + Std.string(access) + ", \n" +
-        "const: " + const + ", \n" +
-        "names: [" + names.join(", ") + "], \n" +
-        "type: " + Std.string(type) + ", \n" +
-        "expr: " + (if (expr != null) Std.string(expr) else "null") +
-        "\n}";
+//        return "MVarDecl { \n" +
+//        "access: " + Std.string(access) + ", \n" +
+//        "const: " + const + ", \n" +
+//        "names: [" + names.join(", ") + "], \n" +
+//        "type: " + Std.string(type) + ", \n" +
+//        "expr: " + (if (expr != null) Std.string(expr) else "null") +
+//        "\n}";
+        return 'MVarDecl(const=${const}, names=[${names.join(", ")}], type=${type}, expr=${if (expr != null) Std.string(expr) else "null"}, access=${access})';
     }
-
-    public function new(){}
 }

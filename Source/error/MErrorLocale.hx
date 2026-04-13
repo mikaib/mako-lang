@@ -5,7 +5,8 @@ class MErrorLocale {
 
     private var _mapping: Map<MErrorKind, String> = [
         MErrorKind.TyperUnificationFailed => "Unification failed between #0 and #1",
-        MErrorKind.TyperOccursCheckFailed => "Occurs check failed for #0 in #1"
+        MErrorKind.TyperOccursCheckFailed => "Occurs check failed for #0 in #1",
+        MErrorKind.TyperInvalidScope => "Internal error : Invalid scope!"
     ];
 
     public function getTemplate(kind: MErrorKind): String {

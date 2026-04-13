@@ -16,7 +16,7 @@ class MVarsPath {
 
     public static function tryIntoEVars(input: ArrayView<MToken>): ParserFlowControl {
         var readIndex = 0;
-        var variable = new MVarDecl();
+        var variable: MVarDecl = {};
         var minToken = input[0];
 
         // Access specifier

@@ -17,12 +17,9 @@ class Main {
                 kind: EBlock([
                     {
                         pos: null,
-                        kind: EVars([
-                            {
-                                name: "test",
-                                type: MType.mono()
-                            }
-                        ])
+                        kind: EVars({
+                            names: ["test"]
+                        })
                     },
                     {
                         pos: null,
@@ -61,6 +58,7 @@ class Main {
         typer.run();
 
         trace(ast);
+        return;
 
         /*var code = "
             const x:i32= 0;

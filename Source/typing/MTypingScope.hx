@@ -15,7 +15,7 @@ class MTypingScope {
 
     public function findVariable(name: String): MOption<MVarDecl> {
         for (v in variables) {
-            if (v.name == name) return Some(v);
+            if (v.names.contains(name)) return Some(v);
         }
 
         return None;
