@@ -59,8 +59,16 @@ class Main {
                         }
                     },
                     {
+                        kind: MIRInstructionKind.Cast,
+                        data: [MIROperand.Register(0), MIROperand.Type(MType.int(32))],
+                        result: {
+                            register: 1,
+                            type: MType.int(32)
+                        }
+                    },
+                    {
                         kind: MIRInstructionKind.Return,
-                        data: [MIROperand.Register(0)]
+                        data: [MIROperand.Register(1)]
                     }
                 ]
             }
@@ -68,12 +76,12 @@ class Main {
 
         var emitter = new ir.impl.MIRC(ir);
         var code = emitter.emitModule();
-        trace(code);
+        Sys.println(code);
 
         var validator = new ir.impl.MIRValidator(ir);
         var issues = validator.validate();
-        trace('TOTAL OF ${issues.length} ISSUES IN IR!');
-        trace(issues.map(x -> '- $x').join('\n'));
+        Sys.println('\nTOTAL OF ${issues.length} ISSUES IN IR!');
+        Sys.println(issues.map(x -> '- $x').join('\n'));
 
         return;
         var ast: MExprList = [

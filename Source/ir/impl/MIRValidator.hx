@@ -29,8 +29,13 @@ private class Scope {
     }
 
     public function validateRegister(reg: MIRRegister, ?type: MType): MOption<MType> {
-        if (_registers.exists(reg) && type != null) {
-            return Some(_registers.get(reg));
+        if (_registers.exists(reg)) {
+            var t = _registers.get(reg);
+            if (type != null && !t.concrete.equals(type.concrete)) {
+                return None;
+            }
+
+            return Some(t);
         }
 
         return None;
