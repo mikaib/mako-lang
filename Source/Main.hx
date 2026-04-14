@@ -74,6 +74,7 @@ class Main {
 
             func mul(a: i32, b: i32): i64 {
                 var h = 1;
+                return 4 + 5;
             }
 
             func main() {

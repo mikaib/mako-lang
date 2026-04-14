@@ -2,13 +2,11 @@ package parsing.paths;
 import parsing.MParser.ParserFlowControl;
 import lexing.MToken;
 import core.MArrayView.ArrayView;
-import parsing.paths.MBlockPath.tryIntoEBlock;
 import haxe.Exception;
 import lexing.MTokenKind;
-import parsing.MExprKind.EBlock;
 
 class MParantPath {
-    public static function tryIntoEParants(input: ArrayView<MToken>): ParserFlowControl {
+    public static function intoEParent(input: ArrayView<MToken>): ParserFlowControl {
         if (!input[0]?.kind.match(TParantOpen)) {
             return PNotParsed;
         }
@@ -56,7 +54,5 @@ class MParantPath {
                 path: minToken.pos.path,
             }
         });
-
-        return tryIntoEBlock(subSlice);
     }
 }

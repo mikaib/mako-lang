@@ -99,8 +99,6 @@ class MFunctionPath {
                 func.expr = null;
         }
 
-        trace("Made func");
-
         return PReturnSome({
             kind: MExprKind.EFunction(func),
             pos: {

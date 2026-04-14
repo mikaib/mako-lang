@@ -3,7 +3,6 @@ import lexing.MToken;
 import core.MArrayView.ArrayView;
 import parsing.MParser.ParserFlowControl;
 import lexing.MTokenKind;
-import parsing.paths.MBlockPath.tryIntoEBlock;
 import core.MOption;
 import core.MOptionKind;
 import core.MBinop;
@@ -66,9 +65,13 @@ class MOperatorPath {
         }
 
         var block = input.subslice(0, index);
-        trace(block.map(t -> '${t.kind}'));
         input.consume(index);
-        return tryIntoEBlock(block);
+        var expr = new MParser(block).intoMExpr();
+        if (expr.isNone()) {
+            return PNotParsed;
+        }
+
+        return PReturnSome(expr.unwrap());
     }
 
     private static function intoBinOp(op: MTokenOperator): Null<MBinop> {
@@ -177,15 +180,11 @@ class MOperatorPath {
         var right = input.subslice(0, readIndex);
         input.consume(readIndex);
         var lastToken = right[right.length - 1];
-        var rightExpression = tryIntoEBlock(right);
-        var rExpr = switch (rightExpression) {
-            case PReturnSome(r):
-                r;
-            case PReturnEaten:
-                return PReturnEaten;
-            case PNotParsed:
-                return PNotParsed;
+        var expr = new MParser(right).intoMExpr();
+        if (expr.isNone()) {
+            return PNotParsed;
         }
+        var rExpr = expr.unwrap();
         var op = switch (leftAST) {
             case Some(lExpr):
                 MExprKind.EBinop(lExpr, rExpr, intoBinOp(firstOperator));
