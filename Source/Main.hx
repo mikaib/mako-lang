@@ -12,6 +12,7 @@ import parsing.dotter.MDotCreator;
 class Main {
 
     public static function main() {
+
         var ast: MExprList = [
             {
                 kind: EBlock([

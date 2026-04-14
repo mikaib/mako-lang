@@ -66,4 +66,46 @@ class MConcreteType {
         return isInt() || isUInt() || isFloat();
     }
 
+    public function isVoid(): Bool {
+        return name == "void";
+    }
+
+    public function isArray(): Bool {
+        return name == "arr";
+    }
+
+    public function isArrayOf(elemType: MType): Bool {
+        return isArray() && params.length == 1 && params[0].concrete.equals(elemType.concrete);
+    }
+
+    public function isString(): Bool {
+        return name == "str";
+    }
+
+    public function equals(other: MConcreteType): Bool {
+        if (defined != other.defined) {
+            return false;
+        }
+
+        if (!defined) {
+            return id == other.id;
+        }
+
+        if (name != other.name) {
+            return false;
+        }
+
+        if (params.length != other.params.length) {
+            return false;
+        }
+
+        for (i in 0...params.length) {
+            if (params[i].toString() != other.params[i].toString()) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
 }
