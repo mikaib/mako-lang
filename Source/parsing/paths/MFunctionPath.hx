@@ -54,6 +54,11 @@ class MFunctionPath {
         argBlock.consume(1); // Consume TParantOpen
 
         while (argBlock.length > 0) {
+            if (argBlock[0].kind.match(TParantClose)) {
+                argBlock.consume(1);
+                break;
+            }
+
             switch ([
                 argBlock[0]?.kind,
                 argBlock[1]?.kind,
@@ -71,6 +76,9 @@ class MFunctionPath {
             }
 
             if (!argBlock[0].kind.match(TComma)) {
+                if (!argBlock[0].kind.match(TParantClose)) {
+                    throw new Exception('Expected ), got ${argBlock[0]}');
+                }
                 break;
             }
             argBlock.consume(1);
@@ -80,7 +88,7 @@ class MFunctionPath {
             input[0]?.kind,
             input[1]?.kind,
         ]) {
-            case [TColon, TConst(CIdent(t))]:
+            case [TFuncAssign, TConst(CIdent(t))]:
                 func.returnType = MType.make(t);
                 input.consume(2);
 

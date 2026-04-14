@@ -23,8 +23,6 @@ class MIfPath {
 
         input.consume(1);
 
-        trace(input.map(t -> '${t.kind}}'));
-
         var eElse: MExpr;
         if (input[0].kind.match(TKeyword(KIf))) {
             var control = intoEIf(input);
@@ -43,8 +41,6 @@ class MIfPath {
 
             eElse = eElseOpt.unwrap();
         }
-
-        trace('Else parsed: ${eElse.kind}');
 
         switch (currentIf.kind) {
             case EIf(cond, eif, _):
