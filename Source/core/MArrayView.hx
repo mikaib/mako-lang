@@ -41,6 +41,15 @@ abstract ArrayView<T>(ArrayViewData<T>) from ArrayViewData<T> to ArrayViewData<T
         return this;
     }
 
+    public function consumeBack(n: Int): ArrayView<T> {
+        if (n < 0 || n > this.length) {
+            throw "Index out of bounds";
+        }
+
+        this.length -= n;
+        return this;
+    }
+
     public function subslice(start: Int, len: Int): ArrayView<T> {
         if (start < 0 || len < 0 || start + len > this.length) {
             throw "Index out of bounds";

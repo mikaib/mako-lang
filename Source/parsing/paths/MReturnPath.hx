@@ -11,7 +11,8 @@ class MReturnPath {
             return PNotParsed;
         }
 
-        var min = input[0].pos.min;
+        var min = input[0];
+        var max = input[input.length - 1].pos.max;
 
         input.consume(1);
 
@@ -26,9 +27,9 @@ class MReturnPath {
         return PReturnSome({
             kind: MExprKind.EReturn(ret),
             pos: {
-                path: input[0].pos.path,
-                min: min,
-                max: input[0].pos.max,
+                path: min.pos.path,
+                min: min.pos.min,
+                max: max,
             }
         });
     }

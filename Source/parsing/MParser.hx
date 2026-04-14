@@ -71,6 +71,7 @@ class MParser {
             switch (flowControl) {
                 case PReturnSome(val): {
                     ast.push(val);
+                    continue;
                 }
                 default:
             }
