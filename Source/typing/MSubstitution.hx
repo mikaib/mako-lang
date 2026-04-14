@@ -16,7 +16,13 @@ class MSubstitution {
     public function apply(t: MType): MType {
         if (!t.isMono()) {
             var params = t.concrete.params.map(p -> apply(p));
-            return MType.make(t.concrete.name, params);
+            for (i in 0...params.length) {
+                if (params[i] != t.concrete.params[i]) {
+                    return MType.make(t.concrete.name, params);
+                }
+            }
+
+            return t;
         }
 
         var found = _map[t.id()];
