@@ -3,9 +3,7 @@ import lexing.MToken;
 import core.MArrayView.ArrayView;
 import parsing.MParser.ParserFlowControl;
 import lexing.MTokenKind;
-import parsing.paths.MBlockPath.MBlockPath.tryIntoEBlock;
 import core.MOptionKind.None;
-import haxe.Exception;
 
 class MReturnPath {
     public static function intoEReturn(input: ArrayView<MToken>): ParserFlowControl {

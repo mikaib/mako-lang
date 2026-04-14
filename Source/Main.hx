@@ -55,6 +55,10 @@ class Main {
             var c = 12.3;
             var d = !c;
 
+            {
+                2 + 2 * 9;
+            }
+
             var e = 3 * ++c + 9++;
             var f = 7 * (1 + 1) / 4;
 

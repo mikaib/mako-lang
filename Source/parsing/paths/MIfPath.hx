@@ -2,13 +2,11 @@ package parsing.paths;
 
 import core.MArrayView.ArrayView;
 import core.MOptionKind;
-import core.MOption;
 import lexing.MToken;
 import lexing.MTokenKind;
 import parsing.MExpr;
 import parsing.MExprKind.EIf;
 import parsing.MParser.ParserFlowControl;
-import parsing.paths.MBlockPath.tryIntoEBlock;
 import haxe.Exception;
 
 class MIfPath {

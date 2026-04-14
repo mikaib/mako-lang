@@ -62,7 +62,8 @@ class MParser {
                 case TKeyword(KReturn):
                     MReturnPath.intoEReturn(tokens);
                 case TBraceOpen:
-                    MBlockPath.tryIntoEBlock(tokens);
+                    var block = MParseBlocker.createBlock(tokens, Some(TBraceOpen), TBraceClose);
+                    MBlockPath.intoEBlock(block);
                 default:
                     PNotParsed;
             }
@@ -70,7 +71,6 @@ class MParser {
             switch (flowControl) {
                 case PReturnSome(val): {
                     ast.push(val);
-                    return ast;
                 }
                 default:
             }
@@ -93,7 +93,7 @@ class MParser {
                 }
             }
             if (!parsed) {
-                trace("Not all tokens could be parsed");
+                trace('Not all tokens could be parsed: ${tokens.map(t -> '${t.kind}, ')}');
                 return ast;
             }
         }

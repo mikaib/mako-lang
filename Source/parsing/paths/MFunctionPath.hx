@@ -9,7 +9,7 @@ import core.MOptionKind;
 import lexing.MTokenKind;
 import core.MConst.CIdent;
 import typing.MType;
-import parsing.paths.MBlockPath.MBlockPath.tryIntoEBlock;
+import parsing.paths.MBlockPath;
 import haxe.Exception;
 
 class MFunctionPath {
@@ -90,8 +90,7 @@ class MFunctionPath {
 
         var funcBlock = MParseBlocker.createBlock(input, Some(TBraceOpen), TBraceClose);
         var max = funcBlock[funcBlock.length - 1].pos.max;
-        funcBlock.consume(1); // Consume TBraceOpen
-        var expression = tryIntoEBlock(funcBlock);
+        var expression = MBlockPath.intoEBlock(funcBlock);
         switch (expression) {
             case PReturnSome(v):
                 func.expr = v;

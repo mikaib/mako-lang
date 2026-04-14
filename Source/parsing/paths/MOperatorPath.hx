@@ -263,6 +263,9 @@ class MOperatorPath {
         switch (expr) {
             case PReturnSome(_):
                 input.consume(readIndex);
+                if (input[0]?.kind.match(MTokenKind.TSemiColon)) {
+                    input.consume(1);
+                }
             default:
         }
         return expr;
