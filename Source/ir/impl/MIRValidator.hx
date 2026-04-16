@@ -123,6 +123,10 @@ class MIRValidator {
         }
     }
 
+    public function isTypeMismatch(left: MType, right: MType): Bool {
+        return !left.concrete.equals(right.concrete) && !(left.concrete.isInt() && right.concrete.isInt()) && !(left.concrete.isFloat() && right.concrete.isFloat());
+    }
+
     public function validateInstruction(inst: MIRInstruction, scope: Scope) {
         switch inst.kind {
             case Add:
@@ -134,7 +138,7 @@ class MIRValidator {
                 var left = validateOperand(inst.data[0], scope);
                 var right = validateOperand(inst.data[1], scope);
 
-                if (!left.concrete.equals(right.concrete)) {
+                if (isTypeMismatch(left, right)) {
                     report('type mismatch in add instruction: expected ${left}, found ${right}');
                 }
 
@@ -159,7 +163,7 @@ class MIRValidator {
                     report('cast instruction requires a result register');
                 }
 
-                if (!inst.result.type.concrete.equals(type.concrete)) {
+                if (isTypeMismatch(inst.result.type, type)) {
                     report('result type mismatch in cast instruction: expected ${type}, found ${inst.result.type}');
                 }
 
@@ -176,7 +180,7 @@ class MIRValidator {
                 var value = validateOperand(inst.data[0], scope);
                 var func = scope.getCurrentFunction();
 
-                if (!value.concrete.equals(func.returnType.concrete)) {
+                if (isTypeMismatch(func.returnType, value)) {
                     report('return type mismatch: expected ${func.returnType}, found ${value}');
                 }
 
@@ -231,6 +235,13 @@ class MIRValidator {
 
             case Type(t):
                 return t;
+
+            case Bool(_):
+                return MType.bool();
+
+            case None:
+                report('usage of "None" operand');
+                return MType.voidType();
 
             case _:
                 trace('unsupported operand kind: ${op}, returning void type');

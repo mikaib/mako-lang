@@ -7,6 +7,7 @@ import core.MVarDecl;
 import core.MFuncDecl;
 import core.MUnop;
 import core.MOption;
+import typing.MType;
 
 enum MExprKind {
     EBinop(left: MExpr, right: MExpr, op: MBinop);
@@ -22,6 +23,7 @@ enum MExprKind {
     EIf(econd: MExpr, eif: MExpr, eelse: MOption<MExpr>);
     EVars(decls: Array<MVarDecl>); // mikaib: should be array, for cases like `var a = 1, b = 2;` or tuples `var value, error = func();` (if we support them)
     EConst(const: MConst);
+    ECast(expr: MExpr, type: MType);
     EBreak;
     EContinue;
 }

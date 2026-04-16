@@ -54,10 +54,21 @@ class MIRC {
                 return Std.string(x);
 
             case Float(x):
-                return Std.string(x);
+                var s = Std.string(x);
+                if (StringTools.contains(s, '.')) {
+                    return s;
+                } else {
+                    return s + '.0';
+                }
 
             case String(x):
                 return '"$x"';
+
+            case Bool(x):
+                return x ? 'true' : 'false';
+
+            case None:
+                return '0 /* none operand? */';
         }
     }
 

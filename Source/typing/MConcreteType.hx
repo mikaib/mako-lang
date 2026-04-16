@@ -9,6 +9,7 @@ class MConcreteType {
     public var id: Int = _globalID++;
     public var params: Array<MType> = [];
     public var defined: Bool = false;
+    public var callable: Bool = false;
 
     public static function createMono(): MConcreteType {
         return {};
@@ -19,6 +20,15 @@ class MConcreteType {
         c.name = name;
         c.defined = true;
         c.params = params ?? [];
+        return c;
+    }
+
+    public static function createCallable(args: Array<MType>, result: MType): MConcreteType {
+        var c: MConcreteType = {};
+        c.name = "callable";
+        c.defined = true;
+        c.params = args.concat([ result ]);
+        c.callable = true;
         return c;
     }
 
@@ -34,7 +44,11 @@ class MConcreteType {
     }
 
     public function toString() {
-        return defined ? (params.length == 0 ? name : '$name<${params.map(Std.string).join(", ")}>') : 'Mono<#$id>';
+        return defined ? if (callable)
+            (params.length == 0 ? name : '(${params.slice(0, -1).map(Std.string).join(", ")}) -> ${Std.string(params[params.length - 1])}')
+        else
+            (params.length == 0 ? name : '$name<${params.map(Std.string).join(", ")}>')
+        : 'Mono<#$id>';
     }
 
     public function isInt(): Bool {
@@ -82,6 +96,10 @@ class MConcreteType {
         return name == "str";
     }
 
+    public function isCallable(): Bool {
+        return callable;
+    }
+
     public function equals(other: MConcreteType): Bool {
         if (defined != other.defined) {
             return false;
@@ -103,6 +121,20 @@ class MConcreteType {
             if (params[i].toString() != other.params[i].toString()) {
                 return false;
             }
+        }
+
+        if (callable) {
+            if (!other.callable) {
+                return false;
+            }
+
+            for (i in 0...params.length) {
+                if (params[i].toString() != other.params[i].toString()) {
+                    return false;
+                }
+            }
+        } else if (other.callable) {
+            return false;
         }
 
         return true;
