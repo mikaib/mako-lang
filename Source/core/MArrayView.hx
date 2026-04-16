@@ -1,4 +1,5 @@
 package core;
+import lexing.MTokenKind;
 
 // Non re-allocating Array 'slice'
 @:structInit

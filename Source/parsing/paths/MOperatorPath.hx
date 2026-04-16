@@ -247,28 +247,7 @@ class MOperatorPath {
             return PNotParsed;
         }
 
-        var readIndex = 0;
-        var depth = 0;
-        while (readIndex < input.length) {
-            var kind = input[readIndex].kind;
-            if (kind == TBraceOpen) depth++;
-            else if (kind == TBraceClose) depth--;
-            else if (kind == TSemiColon && depth == 0) break;
-
-            readIndex++;
-        }
-
-        var operationBlock = input.subslice(0, readIndex);
-        var expr = makeOperationAST(operationBlock, None);
-        switch (expr) {
-            case PReturnSome(_):
-                input.consume(readIndex);
-                if (input[0]?.kind.match(MTokenKind.TSemiColon)) {
-                    input.consume(1);
-                }
-            default:
-        }
-        return expr;
+        return makeOperationAST(input, None);
     }
 }
 

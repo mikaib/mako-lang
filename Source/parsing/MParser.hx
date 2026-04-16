@@ -51,10 +51,33 @@ class MParser {
         return Some(expressions[0]);
     }
 
+    private function splitSentence(input: ArrayView<MToken>): ArrayView<MToken> {
+        var readIndex = 0;
+        var depthBrace = 0;
+        var depthParent = 0;
+        while (readIndex < input.length) {
+            var kind = input[readIndex].kind;
+            readIndex++;
+
+            if (kind == TBraceOpen) depthBrace++;
+            else if (kind == TBraceClose) depthBrace--;
+            else if (kind == TParantOpen) depthParent--;
+            else if (kind == TParantClose) depthParent--;
+            else if (kind == TSemiColon && depthBrace == 0 && depthParent == 0) {
+                var slice = input.subslice(0, readIndex);
+                input.consume(readIndex);
+                input.consumeBack(1); // Eat ;
+                return slice;
+            }
+        }
+        return input;
+    }
+
     public function parseTree(): MExprList {
         var ast = new MExprList();
+        var sentence = splitSentence(tokens);
         while (tokens.length > 0) {
-            var flowControl = switch (tokens[0].kind) {
+            var flowControl = switch (sentence[0].kind) {
                 case TKeyword(KIf):
                     MIfPath.intoEIf(tokens);
                 case TParantOpen:
@@ -78,7 +101,7 @@ class MParser {
 
             var parsed = false;
             for (path in pathsList) {
-                var flowControl = path(tokens);
+                var flowControl = path(sentence);
 
                 switch (flowControl) {
                     case PReturnSome(val): {
