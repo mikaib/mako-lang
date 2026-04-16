@@ -1,6 +1,6 @@
 package parsing;
 import lexing.MToken;
-import parsing.paths.MVarsPath.tryIntoEVars;
+// import parsing.paths.MVarsPath.tryIntoEVars;
 import parsing.paths.MIfPath.tryIntoEIf;
 import parsing.paths.MParantPath.tryIntoEParants;
 import parsing.paths.MReturnPath.tryIntoEReturn;
@@ -22,7 +22,7 @@ class MParser {
     static var pathsList: Array<ParserPathsList> = [
         tryIntoEParants,
         tryIntoEFunction,
-        tryIntoEVars,
+        // tryIntoEVars,
         tryIntoEOperation,
         tryIntoEIf,
         tryIntoEReturn,

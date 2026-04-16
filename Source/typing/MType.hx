@@ -2,42 +2,67 @@ package typing;
 
 class MType {
 
-    private var _concrete: MConcreteType;
+    public var concrete: MConcreteType;
 
     public static function mono(): MType {
         return new MType(MConcreteType.createMono());
     }
 
-    public static function make(x: String): MType {
-        return new MType(MConcreteType.createConcrete(x));
+    public static function make(name: String, ?params: Array<MType>): MType {
+        return new MType(MConcreteType.createConcrete(name, params));
+    }
+
+    public static function int(width: Int): MType {
+        return switch width {
+            case 8, 16, 32, 64: make('i$width');
+            case _: throw 'Unsupported int width: $width';
+        }
+    }
+
+    public static function uint(width: Int): MType {
+        return switch width {
+            case 8, 16, 32, 64: make('u$width');
+            case _: throw 'Unsupported uint width: $width';
+        }
+    }
+
+    public static function float(width: Int): MType {
+        return switch width {
+            case 16, 32, 64: make('f$width');
+            case _: throw 'Unsupported float width: $width';
+        }
+    }
+
+    public static function bool(): MType {
+        return make("bool");
+    }
+
+    public static function voidType(): MType {
+        return make("void");
+    }
+
+    public static function array(inner: MType): MType {
+        return make("arr", [inner]);
+    }
+
+    public static function string(): MType {
+        return make("str");
     }
 
     private function new(c: MConcreteType) {
-        _concrete = c;
+        concrete = c;
     }
 
-    public function setRef(c: MConcreteType): Void {
-        _concrete = c;
-    }
-
-    public function setVal(c: MConcreteType): Void {
-        _concrete.set(c);
+    public function id(): Int {
+        return concrete.id;
     }
 
     public function isMono(): Bool {
-        return !_concrete.defined;
-    }
-
-    public function width(): Int {
-        return _concrete.width();
-    }
-
-    public function concrete(): MConcreteType {
-        return _concrete;
+        return !concrete.defined;
     }
 
     public function toString() {
-        return _concrete.toString();
+        return concrete.toString();
     }
 
 }
