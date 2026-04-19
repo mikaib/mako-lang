@@ -112,7 +112,7 @@ class MOperatorPath {
         throw new Exception('Unexpected unop operator: $op');
     }
 
-    private static function makeOperationAST(input: ArrayView<MToken>, leftAST: MOption<MExpr>): ParserFlowControl {
+    public static function intoOperationAST(input: ArrayView<MToken>, leftAST: MOption<MExpr>): ParserFlowControl {
         if (leftAST == None) {
             var expr = makeExpressionBlock(input);
             switch(expr) {
@@ -145,7 +145,7 @@ class MOperatorPath {
                     }
                 };
                 if (input.length > 0) {
-                    return makeOperationAST(input, Some(expr));
+                    return intoOperationAST(input, Some(expr));
                 }
                 return PReturnSome(expr);
             }
@@ -201,7 +201,7 @@ class MOperatorPath {
         };
 
         if (input.length > 0) {
-            return makeOperationAST(input, Some(expr));
+            return intoOperationAST(input, Some(expr));
         }
         return PReturnSome(expr);
     }
@@ -210,7 +210,7 @@ class MOperatorPath {
     // So 1 + 1 is true
     // if(1 + 1) is false
     // But (1 + 1) is also false, will parse paranthesis first.
-    private static function IsOperator(input: ArrayView<MToken>): Bool {
+    public static function IsOperator(input: ArrayView<MToken>): Bool {
         var index = 0;
         var parantDepth = 0;
         var blockDepth = 0;
@@ -240,14 +240,6 @@ class MOperatorPath {
             }
         }
         return false;
-    }
-
-    public static function tryIntoEOperation(input: ArrayView<MToken>): ParserFlowControl {
-        if (!IsOperator(input)) {
-            return PNotParsed;
-        }
-
-        return makeOperationAST(input, None);
     }
 }
 

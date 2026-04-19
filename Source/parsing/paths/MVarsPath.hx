@@ -88,14 +88,14 @@ class MVarsPath {
         readIndex++;
 
         input.consume(readIndex);
+        trace('${input.map(t -> '${t.kind}')}');
 
         // variable expression
-        var block = MParseBlocker.createBlock(input, None, TSemiColon);
-        var max = block[block.length - 1].pos.max;
+        var max = input[input.length - 1].pos.max;
 
         variable.expr = null;
 
-        var expression = new MParser(block).intoMExpr();
+        var expression = new MParser(input).intoMExpr();
         if (expression.hasValue()) {
             variable.expr = expression.unwrap();
         }

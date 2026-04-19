@@ -21,6 +21,8 @@ class MIfPath {
             return currentIf;
         }
 
+        trace('${input.map(t -> '${t.kind}')}');
+
         input.consume(1);
 
         var eElse: MExpr;
@@ -34,6 +36,7 @@ class MIfPath {
         } else {
             var eElseBlockTokens = MParseBlocker.createBlock(input, Some(TBraceOpen), TBraceClose);
             eElseBlockTokens.consume(1); // Consume '{'
+            eElseBlockTokens.consumeBack(1); // Consume '}'
             var eElseOpt = new MParser(eElseBlockTokens).intoMExpr();
             if (eElseOpt.isNone()) {
                 throw new Exception("Error parsing else");

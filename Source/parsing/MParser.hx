@@ -28,8 +28,6 @@ class MParser {
     static var pathsList: Array<ParserPathsList> = [
         MFunctionPath.tryIntoEFunction,
         MVarsPath.tryIntoEVars,
-        MOperatorPath.tryIntoEOperation,
-        MConstPath.tryIntoEConst,
     ];
 
     var tokens: ArrayView<MToken>;
@@ -61,12 +59,12 @@ class MParser {
 
             if (kind == TBraceOpen) depthBrace++;
             else if (kind == TBraceClose) depthBrace--;
-            else if (kind == TParantOpen) depthParent--;
+            else if (kind == TParantOpen) depthParent++;
             else if (kind == TParantClose) depthParent--;
             else if (kind == TSemiColon && depthBrace == 0 && depthParent == 0) {
                 var slice = input.subslice(0, readIndex);
                 input.consume(readIndex);
-                input.consumeBack(1); // Eat ;
+                slice.consumeBack(1); // Eat ;
                 return slice;
             }
         }
@@ -75,9 +73,8 @@ class MParser {
 
     public function parseTree(): MExprList {
         var ast = new MExprList();
-        var sentence = splitSentence(tokens);
         while (tokens.length > 0) {
-            var flowControl = switch (sentence[0].kind) {
+            var flowControl = switch (tokens[0].kind) {
                 case TKeyword(KIf):
                     MIfPath.intoEIf(tokens);
                 case TParantOpen:
@@ -99,6 +96,8 @@ class MParser {
                 default:
             }
 
+            var sentence = splitSentence(tokens);
+
             var parsed = false;
             for (path in pathsList) {
                 var flowControl = path(sentence);
@@ -114,6 +113,28 @@ class MParser {
                             break;
                         }
                     case PNotParsed: continue;
+                }
+            }
+
+            if(MOperatorPath.IsOperator(sentence)) {
+                var flowControl = MOperatorPath.intoOperationAST(sentence, None);
+                switch (flowControl) {
+                    case PReturnSome(val): {
+                        ast.push(val);
+                        continue;
+                    }
+                    default:
+                }
+            }
+
+            if (sentence.length == 1 && sentence[0].kind.match(TConst(_))) {
+                var flowControl = MConstPath.IntoEConst(sentence);
+                switch (flowControl) {
+                    case PReturnSome(val): {
+                        ast.push(val);
+                        continue;
+                    }
+                    default:
                 }
             }
             if (!parsed) {

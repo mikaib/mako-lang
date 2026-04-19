@@ -6,7 +6,7 @@ import parsing.MParser.ParserFlowControl;
 import lexing.MTokenKind.TConst;
 
 class MConstPath {
-    public static function tryIntoEConst(input: ArrayView<MToken>): ParserFlowControl {
+    public static function IntoEConst(input: ArrayView<MToken>): ParserFlowControl {
         var min = input[0];
         var expr = switch (input[0].kind) {
             case TConst(c):
