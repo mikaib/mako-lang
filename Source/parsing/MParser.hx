@@ -14,11 +14,13 @@ import core.MArrayView.ArrayView;
 import lexing.MTokenKind.MTokenKeyword;
 import haxe.exceptions.NotImplementedException;
 import lexing.MTokenKind;
+import parsing.paths.MCallPath;
+import haxe.Exception;
 
 typedef ParserPathsList = (ArrayView<MToken>) -> ParserFlowControl;
 
 enum ParserFlowControl {
-    PReturnSome(expr:MExpr);
+    PReturnSome(expr: MExpr);
     PReturnEaten;
     PNotParsed;
 }
@@ -98,6 +100,18 @@ class MParser {
 
             var sentence = splitSentence(tokens);
 
+            if (MCallPath.isFuncCall(sentence)) {
+                var flowControl = MCallPath.parseFuncCall(sentence);
+                switch (flowControl) {
+                    case PReturnSome(val): {
+                        ast.push(val);
+                        continue;
+                    }
+                    default:
+                        throw new Exception("Could not parse call");
+                }
+            }
+
             var parsed = false;
             for (path in pathsList) {
                 var flowControl = path(sentence);
@@ -124,6 +138,7 @@ class MParser {
                         continue;
                     }
                     default:
+                        throw new Exception("Could not parse operator");
                 }
             }
 

@@ -81,8 +81,13 @@ class Main {
                 return 4 + 5;
             }
 
-            func main() {
+            func loop() {
 
+            }
+
+            func main() {
+                mul(1, 2);
+                loop();
             }
         ";
 

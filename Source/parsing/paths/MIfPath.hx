@@ -8,6 +8,8 @@ import parsing.MExpr;
 import parsing.MExprKind.EIf;
 import parsing.MParser.ParserFlowControl;
 import haxe.Exception;
+using core.MTokenViewTools;
+using core.MTokenViewTools;
 
 class MIfPath {
 
@@ -35,8 +37,8 @@ class MIfPath {
             };
         } else {
             var eElseBlockTokens = MParseBlocker.createBlock(input, Some(TBraceOpen), TBraceClose);
-            eElseBlockTokens.consume(1); // Consume '{'
-            eElseBlockTokens.consumeBack(1); // Consume '}'
+            eElseBlockTokens.expect(TBraceOpen);
+            eElseBlockTokens.expectBack(TBraceClose);
             var eElseOpt = new MParser(eElseBlockTokens).intoMExpr();
             if (eElseOpt.isNone()) {
                 throw new Exception("Error parsing else");
@@ -72,7 +74,7 @@ class MIfPath {
         var cond = condition.unwrap();
 
         var exprBlock = MParseBlocker.createBlock(input, Some(TBraceOpen), TBraceClose);
-        exprBlock.consume(1); // Consume '{'
+        exprBlock.expect(TBraceOpen);
         var expression = new MParser(exprBlock).intoMExpr();
         if (expression.isNone()) {
             return PNotParsed;

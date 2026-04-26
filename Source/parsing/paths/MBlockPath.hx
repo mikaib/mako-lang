@@ -3,7 +3,7 @@ import core.MArrayView.ArrayView;
 import lexing.MToken;
 import parsing.MParser.ParserFlowControl;
 import lexing.MTokenKind;
-import haxe.Exception;
+using core.MTokenViewTools;
 
 class MBlockPath {
     public static function intoEBlock(input: ArrayView<MToken>): ParserFlowControl {
@@ -14,15 +14,8 @@ class MBlockPath {
         var minToken = input[0];
         var max = input[input.length - 1].pos.max;
 
-        if (!input[0].kind.match(MTokenKind.TBraceOpen)) {
-            throw new Exception('Expected {, found ${input[0].kind}');
-        }
-        input.consume(1);
-
-        if (!input[input.length - 1].kind.match(MTokenKind.TBraceClose)) {
-            throw new Exception('Expected }, found ${input[input.length - 1].kind}');
-        }
-        input.consumeBack(1);
+        input.expect(TBraceOpen);
+        input.expectBack(TBraceClose);
 
         var parser = new MParser(input);
         var expressions = parser.parseTree();

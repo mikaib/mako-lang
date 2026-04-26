@@ -88,7 +88,6 @@ class MVarsPath {
         readIndex++;
 
         input.consume(readIndex);
-        trace('${input.map(t -> '${t.kind}')}');
 
         // variable expression
         var max = input[input.length - 1].pos.max;
