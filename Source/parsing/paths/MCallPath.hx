@@ -1,27 +1,75 @@
 package parsing.paths;
-import lexing.MToken;
-import parsing.MParser.ParserFlowControl;
-import core.MArrayView.ArrayView;
-import haxe.Exception;
-class MCallPath {
-    private static function parseFuncCall(input: ArrayView<MToken>)) {
-    var funcName = switch(input[0]?.kind) {
-        case TConst(CIdent(v)):
 
-        default:
-            return PNotParsed;
+import lexing.MToken;
+import core.MArrayView.ArrayView;
+import parsing.MExprKind;
+import parsing.MParser;
+import haxe.macro.Expr.Constant;
+import lexing.MTokenKind;
+import core.MOptionKind;
+import core.MTokenViewTools;
+import haxe.Exception;
+import parsing.MExpr;
+import core.MConst;
+using core.MTokenViewTools;
+
+class MCallPath {
+    public static function isFuncCall(input: ArrayView<MToken>): Bool {
+        if (input.length < 3) {
+            return false;
         }
+        if (!input[0].kind.match(TConst(CIdent(_)))) {
+            return false;
+        }
+        if (!input[1].kind.match(TParantOpen)) {
+            return false;
+        }
+        if (!input[input.length - 1].kind.match(TParantClose)) {
+            return false;
+        }
+        return true;
     }
 
-    public static function tryIntoECallPath(input: ArrayView<MToken>): ParserFlowControl {
-        switch(input[0]?.kind) {
-            case TConst(CIdent(v)):
+    public static function parseFuncCall(input: ArrayView<MToken>){
+        final min = input[0];
 
-                readIndex += 2;
+        var funcName = MConstPath.IntoEConst(input.subslice(0, 1));
+        var funcNameExpr = switch funcName {
+            case PReturnSome(s):
+                s;
             default:
                 return PNotParsed;
         }
+        input.consume(1);
 
-        return
+        trace('${input.map(t -> '${t.kind}')}');
+
+        var block = MParseBlocker.createBlock(input, Some(TParantOpen), TParantClose);
+        final max = block[block.length - 1];
+        MTokenViewTools.expect(block, TParantOpen);
+        MTokenViewTools.expectBack(block, TParantClose);
+
+        var arguments = MTokenViewTools.splitDepthCounting(block, TComma);
+
+        trace('${arguments.map(t -> '\n${t.map(k -> '${k.kind}')}')}');
+
+        var args = arguments.map(a -> {
+            var parser = new MParser(a).intoMExpr();
+            if (parser.isNone()) {
+                throw new Exception("Unexpected None");
+            }
+            parser.unwrap();
+        });
+
+        trace('${args.map(t -> '\n${t}')}');
+
+        return PReturnSome({
+            kind: ECall(funcNameExpr, args),
+            pos: {
+                path: min.pos.path,
+                min: min.pos.min,
+                max: max.pos.max,
+            },
+        });
     }
 }

@@ -82,6 +82,10 @@ class Main {
             var c = 12.3;
             var d = !c;
 
+            {
+                2 + 2 * 9;
+            }
+
             var e = 3 * ++c + 9++;
             var f = 7 * (1 + 1) / 4;
 
@@ -99,12 +103,18 @@ class Main {
                 4
             };
 
-            func mul(a: i32, b: i32): i64 {
+            func mul(a: i32, b: i32) -> i64 {
                 var h = 1;
+                return 4 + 5;
+            }
+
+            func loop() {
+
             }
 
             func main() {
-
+                mul(1, 2);
+                loop();
             }
         ";
 

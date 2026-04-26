@@ -7,8 +7,6 @@ import core.MConst;
 import lexing.MTokenKind.MTokenOperator;
 import lexing.MTokenKind.MTokenKeyword;
 import core.MPositionRange;
-import core.MBinop;
-import haxe.Exception;
 
 typedef MControlFunc = (String, MOption<MChar>) -> LexerFlowControl;
 
@@ -26,18 +24,18 @@ enum LexerFlowControlEnum {
 class MLexer {
 
     private var readPos: Int = 0;
-    private var _input: String;
+    private var input: String;
 
-    private var _filePath: String;
+    private var filePath: String;
     private var currentLineNumber: Int = 1;
     private var currentCharIndex: Int = 1;
 
     private var lastTokenLineNumber: Int = 1;
     private var lastTokenCharIndex: Int = 1;
 
-    public function new(input: String, filePath: String) {
-        _input = input;
-        _filePath = filePath;
+    public function new(_input: String, _filePath: String) {
+        input = _input;
+        filePath = _filePath;
     }
 
     private function peek(input: String): MOption<MChar> {
@@ -312,7 +310,7 @@ class MLexer {
                 line: currentLineNumber,
                 column: currentCharIndex
             },
-            path: _filePath
+            path: filePath
         }
         updateLastTokenPosition(currentLineNumber, currentCharIndex);
 
@@ -320,14 +318,14 @@ class MLexer {
     }
 
     public function lexTokens(): Array<MToken> {
-        // We might want to consider to implement an array like string buffer for improved performance
+        // We might want to consider to implement an array like string buffer for improved performance by avoiding new allocations
         var currentStringBuf: StringBuf = new StringBuf();
         var currentTokens: Array<MToken> = [];
 
         var char: MOption<MChar>;
 
         do {
-            char = readChar(_input);
+            char = readChar(input);
             if (char.hasValue()) {
                 var c = char.unwrap();
 
@@ -338,7 +336,7 @@ class MLexer {
                 }
 
                 currentStringBuf.addChar(c);
-                var token: MOption<MToken> = tokenFromString(_input, currentStringBuf.toString());
+                var token: MOption<MToken> = tokenFromString(input, currentStringBuf.toString());
                 if (token.hasValue()) {
                     currentTokens.push(token.unwrap());
                     currentStringBuf = new StringBuf();

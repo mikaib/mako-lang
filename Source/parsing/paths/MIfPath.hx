@@ -7,8 +7,9 @@ import lexing.MTokenKind;
 import parsing.MExpr;
 import parsing.MExprKind.EIf;
 import parsing.MParser.ParserFlowControl;
-import parsing.paths.MBlockPath.tryIntoEBlock;
 import haxe.Exception;
+using core.MTokenViewTools;
+using core.MTokenViewTools;
 
 class MIfPath {
 
@@ -22,13 +23,13 @@ class MIfPath {
             return currentIf;
         }
 
-        input.consume(1);
+        trace('${input.map(t -> '${t.kind}')}');
 
-        trace(input.map(t -> '${t.kind}}'));
+        input.consume(1);
 
         var eElse: MExpr;
         if (input[0].kind.match(TKeyword(KIf))) {
-            var control = tryIntoEIf(input);
+            var control = intoEIf(input);
             eElse = switch (control) {
                 case PReturnSome(v): v;
                 case PReturnEaten: throw new Exception("Error parsing else-if");
@@ -36,16 +37,15 @@ class MIfPath {
             };
         } else {
             var eElseBlockTokens = MParseBlocker.createBlock(input, Some(TBraceOpen), TBraceClose);
-            eElseBlockTokens.consume(1); // Consume '{'
-            var control = tryIntoEBlock(eElseBlockTokens);
-            eElse = switch (control) {
-                case PReturnSome(v): v;
-                case PReturnEaten: throw new Exception("Error parsing else");
-                case PNotParsed: throw new Exception("Error parsing else");
-            };
-        }
+            eElseBlockTokens.expect(TBraceOpen);
+            eElseBlockTokens.expectBack(TBraceClose);
+            var eElseOpt = new MParser(eElseBlockTokens).intoMExpr();
+            if (eElseOpt.isNone()) {
+                throw new Exception("Error parsing else");
+            }
 
-        trace('Else parsed: ${eElse.kind}');
+            eElse = eElseOpt.unwrap();
+        }
 
         switch (currentIf.kind) {
             case EIf(cond, eif, _):
@@ -56,7 +56,7 @@ class MIfPath {
         return currentIf;
     }
 
-    public static function tryIntoEIf(input: ArrayView<MToken>): ParserFlowControl {
+    public static function intoEIf(input: ArrayView<MToken>): ParserFlowControl {
         if (input.length == 0 || !input[0].kind.match(TKeyword(KIf))) {
             return PNotParsed;
         }
@@ -66,21 +66,21 @@ class MIfPath {
         input.consume(1);
 
         var condBlock = MParseBlocker.createBlock(input, Some(TParantOpen), TParantClose);
-        var condition = tryIntoEBlock(condBlock);
-        var cond = switch (condition) {
-            case PReturnSome(v): v;
-            case PReturnEaten: return PReturnEaten;
-            case PNotParsed: return PNotParsed;
-        };
+        var condition = new MParser(condBlock).intoMExpr();
+        if (condition.isNone()) {
+            return PNotParsed;
+        }
+
+        var cond = condition.unwrap();
 
         var exprBlock = MParseBlocker.createBlock(input, Some(TBraceOpen), TBraceClose);
-        exprBlock.consume(1); // Consume '{'
-        var expressionBlock = tryIntoEBlock(exprBlock);
-        var expr = switch (expressionBlock) {
-            case PReturnSome(v): v;
-            case PReturnEaten: return PReturnEaten;
-            case PNotParsed: return PNotParsed;
-        };
+        exprBlock.expect(TBraceOpen);
+        var expression = new MParser(exprBlock).intoMExpr();
+        if (expression.isNone()) {
+            return PNotParsed;
+        }
+
+        var expr = condition.unwrap();
 
         var ifExpr: MExpr = {
             kind: EIf(cond, expr, None),
