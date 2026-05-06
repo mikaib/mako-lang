@@ -1,3 +1,5 @@
+.DS_Store
 .idea
 output.txt
 out
+HAXE_OUT
