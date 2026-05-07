@@ -57,7 +57,11 @@ class MCallPath {
             parser.unwrap();
         });
 
+<<<<<<< HEAD
         var call: MExpr = {
+=======
+        return PReturnSome({
+>>>>>>> 4220340 (Fix slight issues)
             kind: ECall(funcNameExpr, args),
             pos: {
                 path: min.pos.path,
