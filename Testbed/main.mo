@@ -1,7 +1,7 @@
-func double(x: i32) -> i32 {
-    return x * 2;
+func mul(a: i32, b: i32): i64 {
+    var h = 1;
 }
 
-func main() -> void {
-    double(10);
+func main() {
+
 }

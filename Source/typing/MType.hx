@@ -49,6 +49,10 @@ class MType {
         return make("str");
     }
 
+    public static function callable(args: Array<MType>, result: MType): MType {
+        return new MType(MConcreteType.createCallable(args, result));
+    }
+
     private function new(c: MConcreteType) {
         concrete = c;
     }

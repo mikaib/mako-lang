@@ -1,13 +1,14 @@
-import parsing.MExprList;
-import parsing.MExprKind;
-import core.MConst;
-import core.MBinop;
 import typing.MTypeSystem;
-import typing.MType;
 import lexing.MLexer;
 import parsing.MParser;
 import core.MArrayView.ArrayView;
-import parsing.dotter.MDotCreator;
+import sys.io.File;
+import ir.gen.MIRGenerator;
+import parsing.MExprList;
+import parsing.MExpr;
+import parsing.MExprKind;
+import typing.MType;
+import core.MBinop;
 
 class Main {
 
@@ -15,52 +16,37 @@ class Main {
 
         var ast: MExprList = [
             {
-                kind: EBlock([
-                    {
+                pos: null,
+                kind: EFunction({
+                    name: "main",
+                    returnType: MType.float(64),
+                    expr: {
                         pos: null,
-                        kind: EVars([
+                        kind: EBlock([
                             {
-                                name: "test",
-                                type: MType.mono(),
+                                pos: null,
+                                kind: EReturn({
+                                    pos: null,
+                                    kind: EBinop({
+                                        pos: null,
+                                        kind: EConst(CInt("1")),
+                                        type: MType.int(32)
+                                    }, {
+                                        pos: null,
+                                        kind: EConst(CFloat("2.0")),
+                                        type: MType.float(64)
+                                    }, MBinop.Add)
+                                })
                             }
                         ])
-                    },
-                    {
-                        pos: null,
-                        kind: EBinop({
-                            pos: null,
-                            kind: EConst(CIdent("test")),
-                            type: MType.mono()
-                        }, {
-                            pos: null,
-                            kind: EConst(CFloat("1.5")),
-                            type: MType.make("f64")
-                        }, MBinop.Assign)
-                    },
-                    {
-                        pos: null,
-                        kind: EBinop({
-                            pos: null,
-                            kind: EConst(CIdent("test")),
-                            type: MType.mono()
-                        }, {
-                            pos: null,
-                            kind: EConst(CFloat("1.5")),
-                            type: MType.make("f32")
-                        }, MBinop.Mul)
                     }
-                ]),
-                pos: null
+                })
             }
         ];
-
-        // Iw + Fq = Fmax(w, q)
-        // Iw + Fq = Fmax(w, q) + 1 // 128
 
         var context: Context = {};
         var typer = new MTypeSystem(ast, context);
         typer.run();
-
         trace(ast);
 
         var code = "
@@ -112,11 +98,10 @@ class Main {
         var tokens = lexer.lexTokens();
         trace(tokens.map(t -> '\n$t'));
 
-        var parser = new MParser(new ArrayView(tokens));
-        var ast = parser.parseTree();
-        var dotter = new MDotCreator();
-        dotter.fromAST(ast);
-        trace(ast.map(t -> '\n$t'));
+        var validator = new ir.impl.MIRValidator(ir);
+        var issues = validator.validate();
+        Sys.println('\nTOTAL OF ${issues.length} ISSUES IN IR!');
+        Sys.println(issues.map(x -> '- $x').join('\n'));
     }
 
 }

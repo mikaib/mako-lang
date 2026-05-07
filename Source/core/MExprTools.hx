@@ -14,11 +14,12 @@ class MExprTools {
 
         switch expr.kind {
             case EBlock(list), EArrayDecl(list): for (e in list) invoke(e);
-            case EParenthesis(e0), EReturn(e0), EUnop(e0, _): invoke(e0);
+            case EParenthesis(e0), EReturn(e0), EUnop(e0, _), ECast(e0, _): invoke(e0);
             case EBinop(e0, e1, _), EArrayAccess(e0, e1), EWhile(e0, e1): invoke(e0); invoke(e1);
             case EIf(e0, e1, e2): invoke(e0); invoke(e1); if (e2.hasValue()) invoke(e2.unwrap());
             case ECall(e0, list): invoke(e0); for (e in list) invoke(e);
             case EVars(decls): for (d in decls) if (d.expr != null) invoke(d.expr);
+            case EFunction(f) if (f.expr != null): invoke(f.expr);
             case EConst(_), EBreak, EContinue, EFunction(_): null;
         }
 
