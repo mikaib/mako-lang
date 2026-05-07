@@ -3,7 +3,6 @@ import lexing.MToken;
 import core.MArrayView.ArrayView;
 import parsing.MParser.ParserFlowControl;
 import lexing.MTokenKind;
-import parsing.paths.MBlockPath.tryIntoEBlock;
 import core.MOption;
 import core.MOptionKind;
 import core.MBinop;
@@ -66,9 +65,13 @@ class MOperatorPath {
         }
 
         var block = input.subslice(0, index);
-        trace(block.map(t -> '${t.kind}'));
         input.consume(index);
-        return tryIntoEBlock(block);
+        var expr = new MParser(block).intoMExpr();
+        if (expr.isNone()) {
+            return PNotParsed;
+        }
+
+        return PReturnSome(expr.unwrap());
     }
 
     private static function intoBinOp(op: MTokenOperator): Null<MBinop> {
@@ -109,7 +112,7 @@ class MOperatorPath {
         throw new Exception('Unexpected unop operator: $op');
     }
 
-    private static function makeOperationAST(input: ArrayView<MToken>, leftAST: MOption<MExpr>): ParserFlowControl {
+    public static function intoOperationAST(input: ArrayView<MToken>, leftAST: MOption<MExpr>): ParserFlowControl {
         if (leftAST == None) {
             var expr = makeExpressionBlock(input);
             switch(expr) {
@@ -142,7 +145,7 @@ class MOperatorPath {
                     }
                 };
                 if (input.length > 0) {
-                    return makeOperationAST(input, Some(expr));
+                    return intoOperationAST(input, Some(expr));
                 }
                 return PReturnSome(expr);
             }
@@ -177,15 +180,11 @@ class MOperatorPath {
         var right = input.subslice(0, readIndex);
         input.consume(readIndex);
         var lastToken = right[right.length - 1];
-        var rightExpression = tryIntoEBlock(right);
-        var rExpr = switch (rightExpression) {
-            case PReturnSome(r):
-                r;
-            case PReturnEaten:
-                return PReturnEaten;
-            case PNotParsed:
-                return PNotParsed;
+        var expr = new MParser(right).intoMExpr();
+        if (expr.isNone()) {
+            return PNotParsed;
         }
+        var rExpr = expr.unwrap();
         var op = switch (leftAST) {
             case Some(lExpr):
                 MExprKind.EBinop(lExpr, rExpr, intoBinOp(firstOperator));
@@ -202,7 +201,7 @@ class MOperatorPath {
         };
 
         if (input.length > 0) {
-            return makeOperationAST(input, Some(expr));
+            return intoOperationAST(input, Some(expr));
         }
         return PReturnSome(expr);
     }
@@ -211,7 +210,7 @@ class MOperatorPath {
     // So 1 + 1 is true
     // if(1 + 1) is false
     // But (1 + 1) is also false, will parse paranthesis first.
-    private static function IsOperator(input: ArrayView<MToken>): Bool {
+    public static function IsOperator(input: ArrayView<MToken>): Bool {
         var index = 0;
         var parantDepth = 0;
         var blockDepth = 0;
@@ -241,32 +240,6 @@ class MOperatorPath {
             }
         }
         return false;
-    }
-
-    public static function tryIntoEOperation(input: ArrayView<MToken>): ParserFlowControl {
-        if (!IsOperator(input)) {
-            return PNotParsed;
-        }
-
-        var readIndex = 0;
-        var depth = 0;
-        while (readIndex < input.length) {
-            var kind = input[readIndex].kind;
-            if (kind == TBraceOpen) depth++;
-            else if (kind == TBraceClose) depth--;
-            else if (kind == TSemiColon && depth == 0) break;
-
-            readIndex++;
-        }
-
-        var operationBlock = input.subslice(0, readIndex);
-        var expr = makeOperationAST(operationBlock, None);
-        switch (expr) {
-            case PReturnSome(_):
-                input.consume(readIndex);
-            default:
-        }
-        return expr;
     }
 }
 

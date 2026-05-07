@@ -33,13 +33,16 @@ class MDotCreator {
             case EArrayDecl(values):
                 throw new NotImplementedException();
             case ECall(expr, args):
-                throw new NotImplementedException();
+                var arguments = args.map(e -> e);
+                return {
+                    label: 'Call ${expr.kind}',
+                    children: arguments,
+                };
             case EParenthesis(expr):
                 return {
                     label: 'Parant',
                     children: [expr],
                 };
-                throw new NotImplementedException();
             case EBlock(exprs):
                 var expressions = exprs.map(e -> e);
                 return {
@@ -55,7 +58,7 @@ class MDotCreator {
                 };
             case EFunction(f):
                 return {
-                    label: 'func ${f.name} (${f.args}): ${f.returnType}',
+                    label: 'func ${f.name} (${f.args.map(arg -> '${arg.name}, ${arg.type}')}): ${f.returnType}',
                     children: [f.expr],
                 };
             case EIf(econd, eif, eelse):

@@ -2,36 +2,35 @@ package parsing.paths;
 import lexing.MToken;
 import core.MArrayView.ArrayView;
 import parsing.MParser.ParserFlowControl;
-import lexing.MTokenKind.MTokenKeyword.KReturn;
-import parsing.paths.MBlockPath.MBlockPath.tryIntoEBlock;
+import lexing.MTokenKind;
 import core.MOptionKind.None;
-import haxe.Exception;
+using core.MTokenViewTools;
 
 class MReturnPath {
-    public static function tryIntoEReturn(input: ArrayView<MToken>): ParserFlowControl {
-        if (input.length == 0 || !input[0].kind.match(TKeyword(KReturn))) {
+    public static function intoEReturn(input: ArrayView<MToken>): ParserFlowControl {
+        if (input.length == 0) {
             return PNotParsed;
         }
 
-        var min = input[0].pos.min;
+        var min = input[0];
+        var max = input[input.length - 1].pos.max;
 
-        input.consume(1);
+        input.expect(TKeyword(KReturn));
 
         var block = MParseBlocker.createBlock(input, None, TSemiColon);
-        var expression = tryIntoEBlock(block);
-        var ret = switch (expression) {
-            case PReturnSome(v):
-                MExprKind.EReturn(v);
-            case PReturnEaten: return PReturnEaten;
-            case PNotParsed: return PNotParsed;
+        var expression = new MParser(block).intoMExpr();
+        if (expression.isNone()) {
+            return PNotParsed;
         }
 
+        var ret = expression.unwrap();
+
         return PReturnSome({
-            kind: ret,
+            kind: MExprKind.EReturn(ret),
             pos: {
-                path: input[0].pos.path,
-                min: min,
-                max: input[0].pos.max,
+                path: min.pos.path,
+                min: min.pos.min,
+                max: max,
             }
         });
     }

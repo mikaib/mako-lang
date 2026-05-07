@@ -1,4 +1,5 @@
 package core;
+import lexing.MTokenKind;
 
 // Non re-allocating Array 'slice'
 @:structInit
@@ -37,6 +38,15 @@ abstract ArrayView<T>(ArrayViewData<T>) from ArrayViewData<T> to ArrayViewData<T
         }
 
         this.offset += n;
+        this.length -= n;
+        return this;
+    }
+
+    public function consumeBack(n: Int): ArrayView<T> {
+        if (n < 0 || n > this.length) {
+            throw "Index out of bounds";
+        }
+
         this.length -= n;
         return this;
     }
