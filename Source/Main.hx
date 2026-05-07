@@ -62,23 +62,13 @@ class Main {
         typer.run();
 
         trace(ast);
-        return;
 
-        /*var code = "
-            const x:i32= 0;
-
-            func mul(a: i32, b: i32) -> i32 {
-                return a * b;
-            }
-
-            var str = \"Hello there!\\t\\\"whose there\\\"\";
+        var code = "
+            var str = \"Hello there!\\t\\\'whose there\\\'\";
             var int = 4;
             var float = 3.14;
             var bool = true;
-        ";*/
-
-        var code = "
-            protected const var a, b: i64 = 0;
+            protected const a: i64 = 0;
             var c = 12.3;
             var d = !c;
 

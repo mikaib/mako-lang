@@ -58,7 +58,7 @@ class MDotCreator {
                 };
             case EFunction(f):
                 return {
-                    label: 'func ${f.name} (${f.args}): ${f.returnType}',
+                    label: 'func ${f.name} (${f.args.map(arg -> '${arg.name}, ${arg.type}')}): ${f.returnType}',
                     children: [f.expr],
                 };
             case EIf(econd, eif, eelse):
