@@ -16,6 +16,7 @@ import haxe.exceptions.NotImplementedException;
 import lexing.MTokenKind;
 import parsing.paths.MCallPath;
 import haxe.Exception;
+import core.MTokenViewTools;
 
 typedef ParserPathsList = (ArrayView<MToken>) -> ParserFlowControl;
 
@@ -66,7 +67,7 @@ class MParser {
             else if (kind == TSemiColon && depthBrace == 0 && depthParent == 0) {
                 var slice = input.subslice(0, readIndex);
                 input.consume(readIndex);
-                slice.consumeBack(1); // Eat ;
+                MTokenViewTools.expectBack(slice, TSemiColon);
                 return slice;
             }
         }

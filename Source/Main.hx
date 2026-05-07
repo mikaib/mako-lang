@@ -68,7 +68,7 @@ class Main {
             var int = 4;
             var float = 3.14;
             var bool = true;
-            protected const var a: i64 = 0;
+            protected const a: i64 = 0;
             var c = 12.3;
             var d = !c;
 

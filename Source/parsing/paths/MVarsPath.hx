@@ -34,12 +34,11 @@ class MVarsPath {
         // Is variable
         var isConst = switch ([
             input[readIndex]?.kind,
-            input[readIndex + 1]?.kind,
         ]) {
-            case [TKeyword(KConst), TKeyword(KVar)]:
-                readIndex += 2;
+            case [TKeyword(KConst)]:
+                readIndex += 1;
                 true;
-            case [TKeyword(KVar), _]:
+            case [TKeyword(KVar)]:
                 readIndex += 1;
                 false;
             default:
