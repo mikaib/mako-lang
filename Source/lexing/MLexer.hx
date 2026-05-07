@@ -88,7 +88,7 @@ class MLexer {
         if (next.hasValue() && next.unwrap().isAlphaNumeric()) {
             return {flowControl: LReturnNone, advanceBy: 0};
         }
-        return {flowControl: LReturnSome(TConst(MConst.CIdent(stringToken))), advanceBy: 0};
+        return {flowControl: LReturnSome(TConst(CIdent(stringToken))), advanceBy: 0};
     }
 
     private function intoCBool(stringToken: String, next: MOption<MChar>): LexerFlowControl {
@@ -115,7 +115,7 @@ class MLexer {
                 }
                 found_dot = true;
             }
-            else if (c <= '0'.code || c >= '9'.code) {
+            else if (c < '0'.code || c > '9'.code) {
                 return {flowControl: LAdvance, advanceBy: 0};
             }
         }

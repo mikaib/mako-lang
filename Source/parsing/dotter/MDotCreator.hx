@@ -16,11 +16,11 @@ class MDotCreator {
     var labelNames: Map<Int, String> = new Map<Int, String>();
     public function new() {}
 
-    public function getMExprData(mExpr: MExprKind): MExprDotData {
-        switch (mExpr) {
+    public function getMExprData(mExpr: MExpr): MExprDotData {
+        switch (mExpr.kind) {
             case EBinop(left, right, op):
                 return {
-                    label: 'BinOp ${op}',
+                    label: 'BinOp ${op} (${mExpr.type})',
                     children: [left, right],
                 };
             case EUnop(expr, op, is_pre):
@@ -54,6 +54,11 @@ class MDotCreator {
             case EReturn(expr):
                 return {
                     label: "Return",
+                    children: [expr],
+                };
+            case ECast(expr, type):
+                return {
+                    label: 'Cast (${expr.type} -> $type)',
                     children: [expr],
                 };
             case EFunction(f):
@@ -102,7 +107,7 @@ class MDotCreator {
     }
 
     private function makeDot(mExpr: MExpr, bindTo: String): String {
-        var exprData = getMExprData(mExpr.kind);
+        var exprData = getMExprData(mExpr);
         var id = lastIdentifier++;
         var returnString = "";
         for (expr in exprData.children) {
