@@ -1,6 +1,7 @@
 package lexing;
 
 import core.MConst;
+import haxe.exceptions.NotImplementedException;
 
 enum MTokenKind {
     TNone;
@@ -18,6 +19,7 @@ enum MTokenKind {
     TColon;
     TSemiColon;
     TComma;
+    TDot;
 }
 
 enum MTokenKeyword {
@@ -70,7 +72,7 @@ enum MTokenOperator {
 
 class MTokenUtil {
 
-    public static function tokenKindToString(kind:MTokenKind):String {
+    public static function tokenKindToString(kind: MTokenKind):String {
         return switch (kind) {
             case TNone: "None";
 
@@ -95,12 +97,13 @@ class MTokenUtil {
             case TColon: ":";
             case TSemiColon: ";";
             case TComma: ",";
+            case TDot: ".";
 
-            default : "UnhandledToken";
+            default : throw new NotImplementedException('Tried to print: ${kind}, but no implementation was foundn');
         }
     }
 
-    static function keywordToString(k:MTokenKeyword):String {
+    static function keywordToString(k: MTokenKeyword):String {
         return switch (k) {
             case KFunc: "func";
             case KClass: "class";
@@ -115,11 +118,11 @@ class MTokenUtil {
             case KWhile: "while";
             case KDo: "do";
             case KFor: "for";
-            default : "UnhandledKeyword";
+            default : throw new NotImplementedException('Tried to print: ${k}, but no implementation was foundn');
         }
     }
 
-    static function operatorToString(op:MTokenOperator):String {
+    static function operatorToString(op: MTokenOperator):String {
         return switch (op) {
             case OIncrement: "++";
             case ODecrement: "--";
@@ -150,7 +153,7 @@ class MTokenUtil {
             case OOrAssign: "|=";
             case OAndAssign: "&=";
             case OXorAssign: "^=";
-            default : "UnhandledOperator";
+            default : throw new NotImplementedException('Tried to print: ${op}, but no implementation was foundn');
         }
     }
 }

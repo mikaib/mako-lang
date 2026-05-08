@@ -263,6 +263,7 @@ class MLexer {
             case "?": return {flowControl: LReturnSome(TQuestion), advanceBy: 0};
             case ";": return {flowControl: LReturnSome(TSemiColon), advanceBy: 0};
             case ",": return {flowControl: LReturnSome(TComma), advanceBy: 0};
+            case ".": return {flowControl: LReturnSome(TDot), advanceBy: 0};
             default:
                 return {flowControl: LAdvance, advanceBy: 0};
         }
