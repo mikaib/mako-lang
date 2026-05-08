@@ -15,7 +15,7 @@ enum MExprKind {
     EArrayAccess(expr: MExpr, index: MExpr);
     EArrayDecl(values: MExprList);
     EFunction(f: MFuncDecl);
-    //EObjectAccess(left: MExpr, right: MExpr);
+    EObjectAccess(left: MExpr, right: MExpr);
     ECall(expr: MExpr, args: MExprList);
     EParenthesis(expr: MExpr);
     EBlock(exprs: MExprList);

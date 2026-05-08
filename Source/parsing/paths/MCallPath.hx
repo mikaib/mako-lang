@@ -59,13 +59,18 @@ class MCallPath {
             parser.unwrap();
         });
 
-        return PReturnSome({
+        var call: MExpr = {
             kind: ECall(funcNameExpr, args),
             pos: {
                 path: min.pos.path,
                 min: min.pos.min,
                 max: max.pos.max,
             },
-        });
+        };
+
+        if (input.length > 0 && input[0].kind.equals(TDot)) {
+            return MObjectAccessPath.intoObjectAccess(call, input);
+        }
+        return PReturnSome(call);
     }
 }

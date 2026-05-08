@@ -66,6 +66,11 @@ class MDotCreator {
                     label: 'func ${f.name} (${f.args.map(arg -> '${arg.name}, ${arg.type}')}): ${f.returnType}',
                     children: [f.expr],
                 };
+            case EObjectAccess(left, right):
+                return {
+                    label: 'EObjAccess ${mExpr.type}',
+                    children: [left, right],
+                }
             case EIf(econd, eif, eelse):
                 var expressions = [econd, eif];
                 if (eelse.hasValue()) {

@@ -61,7 +61,8 @@ class Main {
 //        ";
 
         var code = "
-            f32 main() -> i32 {
+            func main() -> i32 {
+                x().y();
                 var x = 0.0;
                 return 2 + x;
             }
