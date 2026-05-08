@@ -51,8 +51,6 @@ class MCallPath {
 
         var arguments = MTokenViewTools.splitDepthCounting(block, TComma);
 
-        trace('${arguments.map(t -> '\n${t.map(k -> '${k.kind}')}')}');
-
         var args = arguments.map(a -> {
             var parser = new MParser(a).intoMExpr();
             if (parser.isNone()) {
@@ -60,8 +58,6 @@ class MCallPath {
             }
             parser.unwrap();
         });
-
-        trace('${args.map(t -> '\n${t}')}');
 
         return PReturnSome({
             kind: ECall(funcNameExpr, args),
