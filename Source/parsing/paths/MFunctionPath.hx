@@ -112,7 +112,8 @@ class MFunctionPath {
                 path: minToken.pos.path,
                 min: minToken.pos.min,
                 max: max,
-            }
+            },
+            type: MType.callable(func.args.map(arg -> arg.type), func.returnType)
         });
     }
 }
