@@ -62,7 +62,10 @@ class Main {
 
         var code = "
             func main() -> i32 {
-                x().y();
+                while(1.1 == 1) {
+                    x += 1;
+                }
+                x().y().z().a();
                 var x = 0.0;
                 return 2 + x;
             }

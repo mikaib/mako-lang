@@ -50,6 +50,10 @@ class MDotCreator {
                     children: expressions,
                 };
             case EWhile(econd, ebody):
+                return {
+                    label: "While",
+                    children: [econd, ebody],
+                }
                 throw new NotImplementedException();
             case EReturn(expr):
                 return {
