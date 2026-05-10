@@ -49,12 +49,17 @@ class MDotCreator {
                     label: 'BLOCK',
                     children: expressions,
                 };
-            case EWhile(econd, ebody, is_do):
+            case EWhile(econd, ebody, isDoWhile):
                 return {
-                    label: '${if (is_do) { 'do ';} else {'';}}While',
+                    label: '${if (isDoWhile) { 'do ';} else {'';}}While',
                     children: [econd, ebody],
                 }
-                throw new NotImplementedException();
+            case EFor(variable, cond, condExpr, expr):
+                var children = [];
+                return {
+                    label: 'For',
+                    children: [variable, cond, condExpr, expr].filter(v -> v != null),
+                }
             case EReturn(expr):
                 return {
                     label: "Return",
