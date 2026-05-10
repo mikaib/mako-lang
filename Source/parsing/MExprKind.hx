@@ -19,7 +19,8 @@ enum MExprKind {
     ECall(expr: MExpr, args: MExprList);
     EParenthesis(expr: MExpr);
     EBlock(exprs: MExprList);
-    EWhile(econd: MExpr, ebody: MExpr, is_do_while: Bool);
+    EWhile(econd: MExpr, ebody: MExpr, isDoWhile: Bool);
+    EFor(variable: MExpr, cond: MExpr, condExpr: MExpr, expr: MExpr);
     EReturn(expr: MExpr);
     EIf(econd: MExpr, eif: MExpr, eelse: MOption<MExpr>);
     EVars(decls: Array<MVarDecl>); // mikaib: should be array, for cases like tuples `var value, error = func();` (if we support them)

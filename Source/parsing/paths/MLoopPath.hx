@@ -76,21 +76,56 @@ class MLoopPath {
                 path: min.pos.path,
                 min: min.pos.min,
                 max: max.pos.max
-
             },
             type: MType.mono(),
         });
     }
 
     private static function intoForLoop(input: ArrayView<MToken>): ParserFlowControl {
-        //for
-        //startExpr
-        //cond
-        //runExpr
-        //block
-        //    ...
-
-        return PNotParsed;
+        final min = input[0];
+        input.expect(TKeyword(KFor));
+        var parantBlock = MParseBlocker.createBlock(input, Some(TParantOpen), TParantClose);
+        parantBlock.expect(TParantOpen);
+        parantBlock.expectBack(TParantClose);
+        final parts = parantBlock.splitDepthCounting(TSemiColon);
+        for (p in parts) {
+            trace(p);
+            trace(p.map(t -> '${t}'));
+        }
+        if (parts.length != 3) {
+            throw new Exception('for loop must be in the form of for(...;...;...), found only ${parts.length - 1} semicolons');
+        }
+        //variable: MExpr, cond: MExpr, condExpr: MExpr
+        final variable = new MParser(parts[0]).parseTree();
+        final condition = new MParser(parts[1]).parseTree();
+        final conditionExpr = new MParser(parts[2]).parseTree();
+        if (variable.length > 1) {
+            throw new Exception("Error parsing for(...;;)");
+        }
+        if (condition.length > 1) {
+            throw new Exception("Error parsing for(;...;)");
+        }
+        if (conditionExpr.length > 1) {
+            throw new Exception("Error parsing for(;;...)");
+        }
+        var exprBlock = MParseBlocker.createBlock(input, Some(TBraceOpen), TBraceClose);
+        final max = exprBlock[exprBlock.length - 1];
+        var expression = new MParser(exprBlock).parseTree();
+        if (expression.length == 0) {
+            throw new Exception("Expected block expression: {}, found void");
+        }
+        if (expression.length > 1) {
+            throw new Exception("Expected one block expression: {}, found multiple");
+        }
+        return PReturnSome({
+            kind: MExprKind.EFor(variable[0], condition[0], conditionExpr[0], expression[0]),
+            pos: {
+                path: min.pos.path,
+                min: min.pos.min,
+                max: max.pos.max
+            },
+            type: MType.mono(),
+        });
     }
 
     public static function intoLoop(input: ArrayView<MToken>): ParserFlowControl {
