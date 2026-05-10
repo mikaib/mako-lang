@@ -22,7 +22,7 @@ class MOperatorPath {
                 return 4;
             case OLogicalOr:
                 return 5;
-            case ONotEaqual, OEqual, OGreatherThen, OGreaterThenEqualTo, OLessThen, OLessThenEqualTo:
+            case ONotEaqual, OEqual, OGreatherThen, OGreaterThenEqualTo, OLessThen, OLessThenEqualTo, OAddAssign, OSubtractAssign:
                 return 6;
             default:
                 throw new Exception('Unexpected operator: $op');
@@ -85,7 +85,9 @@ class MOperatorPath {
             MTokenOperator.OGreatherThen => MBinop.GreaterThen,
             MTokenOperator.OGreaterThenEqualTo => MBinop.GreaterThenEqualTo,
             MTokenOperator.OLessThen => MBinop.LessThen,
-            MTokenOperator.OLessThenEqualTo => MBinop.LessThenEqualTo
+            MTokenOperator.OLessThenEqualTo => MBinop.LessThenEqualTo,
+            MTokenOperator.OAddAssign => MBinop.AssignOp(MBinop.Add),
+            MTokenOperator.OSubtractAssign => MBinop.AssignOp(MBinop.Sub),
         ];
 
         final result = table[op];

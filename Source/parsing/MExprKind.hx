@@ -22,7 +22,7 @@ enum MExprKind {
     EWhile(econd: MExpr, ebody: MExpr);
     EReturn(expr: MExpr);
     EIf(econd: MExpr, eif: MExpr, eelse: MOption<MExpr>);
-    EVars(decls: Array<MVarDecl>); // mikaib: should be array, for cases like `var a = 1, b = 2;` or tuples `var value, error = func();` (if we support them)
+    EVars(decls: Array<MVarDecl>); // mikaib: should be array, for cases like tuples `var value, error = func();` (if we support them)
     EConst(const: MConst);
     ECast(expr: MExpr, type: MType);
     EBreak;

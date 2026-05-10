@@ -42,8 +42,6 @@ class MCallPath {
         }
         input.consume(1);
 
-        trace('${input.map(t -> '${t.kind}')}');
-
         var block = MParseBlocker.createBlock(input, Some(TParantOpen), TParantClose);
         final max = block[block.length - 1];
         MTokenViewTools.expect(block, TParantOpen);
