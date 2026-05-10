@@ -49,9 +49,9 @@ class MDotCreator {
                     label: 'BLOCK',
                     children: expressions,
                 };
-            case EWhile(econd, ebody):
+            case EWhile(econd, ebody, is_do):
                 return {
-                    label: "While",
+                    label: '${if (is_do) { 'do ';} else {'';}}While',
                     children: [econd, ebody],
                 }
                 throw new NotImplementedException();
