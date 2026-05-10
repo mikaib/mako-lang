@@ -12,12 +12,38 @@ using core.MTokenViewTools;
 
 class MLoopPath {
     private static function intoDoWhileLoop(input: ArrayView<MToken>): ParserFlowControl {
-        //do
-        //block
-        //    ...
-        //while
-        //cond
-        return PNotParsed;
+        final min = input[0];
+        input.expect(TKeyword(KDo));
+        var exprBlock = MParseBlocker.createBlock(input, Some(TBraceOpen), TBraceClose);
+        var expression = new MParser(exprBlock).parseTree();
+        if (expression.length == 0) {
+            throw new Exception("Expected block expression: {}, found void");
+        }
+        if (expression.length > 1) {
+            throw new Exception("Expected one block expression: {}, found multiple");
+        }
+        input.expect(TKeyword(KWhile));
+        var condBlock = MParseBlocker.createBlock(input, Some(TParantOpen), TParantClose);
+        final max = condBlock[condBlock.length - 1];
+        condBlock.expect(TParantOpen);
+        condBlock.expectBack(TParantClose);
+        var condition = new MParser(condBlock).parseTree();
+        if (condition.length == 0) {
+            throw new Exception("Expected condition, found void");
+        }
+        if (condition.length > 1) {
+            throw new Exception("Expected one condition, found multiple");
+        }
+        return PReturnSome({
+            kind: MExprKind.EWhile(condition[0], expression[0], true),
+            pos: {
+                path: min.pos.path,
+                min: min.pos.min,
+                max: max.pos.max
+
+            },
+            type: MType.mono(),
+        });
     }
 
     private static function intoWhileLoop(input: ArrayView<MToken>): ParserFlowControl{
@@ -37,15 +63,15 @@ class MLoopPath {
         var exprBlock = MParseBlocker.createBlock(input, Some(TBraceOpen), TBraceClose);
         final max = exprBlock[exprBlock.length - 1];
         var expression = new MParser(exprBlock).parseTree();
-        if (condition.length == 0) {
+        if (expression.length == 0) {
             throw new Exception("Expected block expression: {}, found void");
         }
-        if (condition.length > 1) {
+        if (expression.length > 1) {
             throw new Exception("Expected one block expression: {}, found multiple");
         }
 
         return PReturnSome({
-            kind: MExprKind.EWhile(condition[0], expression[0]),
+            kind: MExprKind.EWhile(condition[0], expression[0], false),
             pos: {
                 path: min.pos.path,
                 min: min.pos.min,
