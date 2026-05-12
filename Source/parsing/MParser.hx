@@ -4,7 +4,7 @@ import core.MOptionKind;
 import lexing.MToken;
 import parsing.paths.MVarsPath;
 import parsing.paths.MIfPath;
-import parsing.paths.MParantPath;
+import parsing.paths.MParentPath;
 import parsing.paths.MReturnPath;
 import parsing.paths.MConstPath;
 import parsing.paths.MOperatorPath;
@@ -63,8 +63,8 @@ class MParser {
 
             if (kind == TBraceOpen) depthBrace++;
             else if (kind == TBraceClose) depthBrace--;
-            else if (kind == TParantOpen) depthParent++;
-            else if (kind == TParantClose) depthParent--;
+            else if (kind == TParentOpen) depthParent++;
+            else if (kind == TParentClose) depthParent--;
             else if (kind == TSemiColon && depthBrace == 0 && depthParent == 0) {
                 var slice = input.subslice(0, readIndex);
                 input.consume(readIndex);
@@ -94,8 +94,8 @@ class MParser {
         var flowControl = switch (tokens[0].kind) {
             case TKeyword(KIf):
                 MIfPath.intoEIf(tokens);
-            case TParantOpen:
-                MParantPath.intoEParent(tokens);
+            case TParentOpen:
+                MParentPath.intoEParent(tokens);
             case TKeyword(KReturn):
                 MReturnPath.intoEReturn(tokens);
             case TBraceOpen:

@@ -253,8 +253,8 @@ class MLexer {
     private function intoToken(stringToken: String, next: MOption<MChar>): LexerFlowControl {
         switch (stringToken) {
             case "-" if (next.isValue(">")): return {flowControl: LReturnSome(TFuncAssign), advanceBy: 1};
-            case "(": return {flowControl: LReturnSome(TParantOpen), advanceBy: 0};
-            case ")": return {flowControl: LReturnSome(TParantClose), advanceBy: 0};
+            case "(": return {flowControl: LReturnSome(TParentOpen), advanceBy: 0};
+            case ")": return {flowControl: LReturnSome(TParentClose), advanceBy: 0};
             case "{": return {flowControl: LReturnSome(TBraceOpen), advanceBy: 0};
             case "}": return {flowControl: LReturnSome(TBraceClose), advanceBy: 0};
             case "[": return {flowControl: LReturnSome(TBracketOpen), advanceBy: 0};

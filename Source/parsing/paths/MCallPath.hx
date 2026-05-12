@@ -21,10 +21,10 @@ class MCallPath {
         if (!input[0].kind.match(TConst(CIdent(_)))) {
             return false;
         }
-        if (!input[1].kind.match(TParantOpen)) {
+        if (!input[1].kind.match(TParentOpen)) {
             return false;
         }
-        if (!input[input.length - 1].kind.match(TParantClose)) {
+        if (!input[input.length - 1].kind.match(TParentClose)) {
             return false;
         }
         return true;
@@ -42,10 +42,10 @@ class MCallPath {
         }
         input.consume(1);
 
-        var block = MParseBlocker.createBlock(input, Some(TParantOpen), TParantClose);
+        var block = MParseBlocker.createBlock(input, Some(TParentOpen), TParentClose);
         final max = block[block.length - 1];
-        MTokenViewTools.expect(block, TParantOpen);
-        MTokenViewTools.expectBack(block, TParantClose);
+        MTokenViewTools.expect(block, TParentOpen);
+        MTokenViewTools.expectBack(block, TParentClose);
 
         var arguments = MTokenViewTools.splitDepthCounting(block, TComma);
 
