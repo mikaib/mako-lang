@@ -18,8 +18,7 @@ import parsing.paths.MCallPath;
 import haxe.Exception;
 import core.MTokenViewTools;
 import parsing.paths.MLoopPath;
-
-typedef ParserPathsList = (ArrayView<MToken>) -> ParserFlowControl;
+import core.MAccessLevel;
 
 enum ParserFlowControl {
     PReturnSome(expr: MExpr);
@@ -28,12 +27,6 @@ enum ParserFlowControl {
 }
 
 class MParser {
-
-    static var pathsList: Array<ParserPathsList> = [
-        MFunctionPath.tryIntoEFunction,
-        MVarsPath.tryIntoEVars,
-    ];
-
     var tokens: ArrayView<MToken>;
 
     public function new(_tokens: ArrayView<MToken>) {
@@ -153,30 +146,36 @@ class MParser {
             }
         }
 
-        for (path in pathsList) {
-            var flowControl = path(sentence);
+        trace(sentence.map(t -> '${t.kind}'));
 
+        final accessSpecifier = switch sentence[0].kind {
+            case TKeyword(KPublic): sentence.consume(1); APublic;
+            case TKeyword(KProtected): sentence.consume(1); AProtected;
+            case TKeyword(KPrivate): sentence.consume(1); APrivate;
+            default: APrivate;
+        };
+
+        var control: MOption<ParserFlowControl> = switch sentence[0].kind {
+            case TKeyword(KFunc): Some(MFunctionPath.intoEFunction(sentence, accessSpecifier));
+            case TKeyword(KVar): Some(MVarsPath.intoEVars(sentence, accessSpecifier));
+            case TKeyword(KConst): Some(MVarsPath.intoEVars(sentence, accessSpecifier));
+            default: None;
+        };
+
+        if (control.hasValue()){
+            var flowControl = control.unwrap();
             switch (flowControl) {
-                case PReturnSome(val): {
-                    return Some(val);
-                }
-                case PReturnEaten: {
-                    return None;
-                }
-                case PNotParsed:
-                    continue;
-                }
+                case PReturnSome(val): return Some(val);
+                default: throw new Exception("Parse was unsuccessfull");
+            }
         }
 
         if(MOperatorPath.IsOperator(sentence)) {
             var flowControl = MOperatorPath.intoOperationAST(sentence, None);
             switch (flowControl) {
-                case PReturnSome(val): {
-                    return Some(val);
-                }
-                default:
-                    throw new Exception("Could not parse operator");
-                }
+                case PReturnSome(val): return Some(val);
+                default: throw new Exception("Could not parse operator");
+            }
         }
 
         if (sentence.length == 1 && sentence[0].kind.match(TConst(_))) {
