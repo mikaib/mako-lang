@@ -71,27 +71,7 @@ class MLoopPath {
         var parentBlock = MParseBlocker.createBlock(input, Some(TParentOpen), TParentClose);
         parentBlock.expect(TParentOpen);
         parentBlock.expectBack(TParentClose);
-        final parts = parentBlock.splitDepthCounting(TSemiColon);
-        for (p in parts) {
-            trace(p);
-            trace(p.map(t -> '${t}'));
-        }
-        if (parts.length != 3) {
-            throw new Exception('for loop must be in the form of for(...;...;...), found only ${parts.length - 1} semicolons');
-        }
-        //variable: MExpr, cond: MExpr, condExpr: MExpr
-        final variable = new MParser(parts[0]).parseTree();
-        final condition = new MParser(parts[1]).parseTree();
-        final conditionExpr = new MParser(parts[2]).parseTree();
-        if (variable.length > 1) {
-            throw new Exception("Error parsing for(...;;)");
-        }
-        if (condition.length > 1) {
-            throw new Exception("Error parsing for(;...;)");
-        }
-        if (conditionExpr.length > 1) {
-            throw new Exception("Error parsing for(;;...)");
-        }
+        final parts = new MParser(parentBlock).expectExprs(3, None);
 
         var expr = new MParser(input).parseNextExpr();
         if (expr == None) {
@@ -99,7 +79,7 @@ class MLoopPath {
         }
         var expression = expr.unwrap();
         return PReturnSome({
-            kind: MExprKind.EFor(variable[0], condition[0], conditionExpr[0], expression),
+            kind: MExprKind.EFor(parts[0], parts[1], parts[2], expression),
             pos: {
                 path: min.pos.path,
                 min: min.pos.min,

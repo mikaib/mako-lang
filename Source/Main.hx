@@ -62,7 +62,7 @@ class Main {
 
         var code = "
             func main() -> i32 {
-                for(var x: i32 = 0;; x++) {
+                for(var x: i32 = 0; i < 5; x++) {
                     x -= 1;
                 }
                 do {1 + 2} while (2 == 3.4)
