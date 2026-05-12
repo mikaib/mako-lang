@@ -90,6 +90,22 @@ class MParser {
         return ast;
     }
 
+    public function expectExprs(exprCount: Int, customErrorMsg: MOption<String>): Array<MExpr> {
+        var exprArr = [];
+        for (i in 0...exprCount - 1) {
+            var expr = parseNextExpr();
+            if (expr.isNone()) {
+                if (customErrorMsg.hasValue()) {
+                    throw new Exception(customErrorMsg.unwrap());
+                }
+                throw new Exception('Expected expr, found none');
+            }
+            exprArr.push(expr.unwrap());
+        }
+
+        return exprArr;
+    }
+
     public function parseNextExpr(): MOption<MExpr> {
         var flowControl = switch (tokens[0].kind) {
             case TKeyword(KIf):
@@ -122,6 +138,9 @@ class MParser {
         }
 
         var sentence = splitSentence(tokens);
+        if (sentence.length == 0) {
+            return None;
+        }
 
         if (MCallPath.isFuncCall(sentence)) {
             var flowControl = MCallPath.parseFuncCall(sentence);
