@@ -12,24 +12,10 @@ import core.MAccessLevel;
 
 class MVarsPath {
 
-    public static function tryIntoEVars(input: ArrayView<MToken>): ParserFlowControl {
+    public static function intoEVars(input: ArrayView<MToken>, accessLevel: MAccessLevel): ParserFlowControl {
+        trace(input.map(t -> '${t.kind}'));
         var readIndex = 0;
         var minToken = input[0];
-
-        // Access specifier
-        var varAccess = switch (input[readIndex].kind) {
-            case TKeyword(KPublic):
-                readIndex += 1;
-                APublic;
-            case TKeyword(KProtected):
-                readIndex += 1;
-                AProtected;
-            case TKeyword(KPrivate):
-                readIndex += 1;
-                APrivate;
-            default:
-                null;
-        };
 
         // Is variable
         var isConst = switch ([
@@ -42,17 +28,16 @@ class MVarsPath {
                 readIndex += 1;
                 false;
             default:
-                return PNotParsed;
+                throw new Exception('Expected const or var, found: ${input[readIndex].kind}');
         };
 
-        // Variable names
+        // Variable name
         var varName = switch ([
                 input[readIndex]?.kind,
             ]) {
                 case [TConst(CIdent(v))]:
                     readIndex += 1;
                     v;
-
                 default:
                     throw new Exception('Error parsing var: ${input[readIndex].kind}');
             }
@@ -97,7 +82,7 @@ class MVarsPath {
                         name: varName,
                         type: varType,
                         expr: expression,
-                        access: varAccess,
+                        access: accessLevel,
                     }]),
                  pos: {
                      min: minToken.pos.min,

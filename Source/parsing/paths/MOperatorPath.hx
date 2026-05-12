@@ -218,6 +218,7 @@ class MOperatorPath {
     // if(1 + 1) is false
     // But (1 + 1) is also false, will parse parenthesis first.
     public static function IsOperator(input: ArrayView<MToken>): Bool {
+        trace(input.map(t -> '${t.kind}'));
         var index = 0;
         var parentDepth = 0;
         var blockDepth = 0;
