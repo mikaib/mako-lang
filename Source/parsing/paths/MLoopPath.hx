@@ -14,32 +14,24 @@ class MLoopPath {
     private static function intoDoWhileLoop(input: ArrayView<MToken>): ParserFlowControl {
         final min = input[0];
         input.expect(TKeyword(KDo));
-        var exprBlock = MParseBlocker.createBlock(input, Some(TBraceOpen), TBraceClose);
-        var expression = new MParser(exprBlock).parseTree();
-        if (expression.length == 0) {
-            throw new Exception("Expected block expression: {}, found void");
+        var expr = new MParser(input).parseNextExpr();
+        if (expr == None) {
+            throw new Exception("Expected expression, found void");
         }
-        if (expression.length > 1) {
-            throw new Exception("Expected one block expression: {}, found multiple");
-        }
+        var expression = expr.unwrap();
+
         input.expect(TKeyword(KWhile));
-        var condBlock = MParseBlocker.createBlock(input, Some(TParantOpen), TParantClose);
-        final max = condBlock[condBlock.length - 1];
-        condBlock.expect(TParantOpen);
-        condBlock.expectBack(TParantClose);
-        var condition = new MParser(condBlock).parseTree();
-        if (condition.length == 0) {
-            throw new Exception("Expected condition, found void");
+        var cond = new MParser(input).parseNextExpr();
+        if (cond == None) {
+            throw new Exception("Expected expression, found void");
         }
-        if (condition.length > 1) {
-            throw new Exception("Expected one condition, found multiple");
-        }
+        var condition = cond.unwrap();
         return PReturnSome({
-            kind: MExprKind.EWhile(condition[0], expression[0], true),
+            kind: MExprKind.EWhile(condition, expression, true),
             pos: {
                 path: min.pos.path,
                 min: min.pos.min,
-                max: max.pos.max
+                max: condition.pos.max,
 
             },
             type: MType.mono(),
@@ -49,33 +41,25 @@ class MLoopPath {
     private static function intoWhileLoop(input: ArrayView<MToken>): ParserFlowControl{
         final min = input[0];
         input.expect(TKeyword(KWhile));
-        var condBlock = MParseBlocker.createBlock(input, Some(TParantOpen), TParantClose);
-        condBlock.expect(TParantOpen);
-        condBlock.expectBack(TParantClose);
-        var condition = new MParser(condBlock).parseTree();
-        if (condition.length == 0) {
-            throw new Exception("Expected condition, found void");
+        var cond = new MParser(input).parseNextExpr();
+        if (cond == None) {
+            throw new Exception("Expected expression, found void");
         }
-        if (condition.length > 1) {
-            throw new Exception("Expected one condition, found multiple");
-        }
+        var condition = cond.unwrap();
 
-        var exprBlock = MParseBlocker.createBlock(input, Some(TBraceOpen), TBraceClose);
-        final max = exprBlock[exprBlock.length - 1];
-        var expression = new MParser(exprBlock).parseTree();
-        if (expression.length == 0) {
-            throw new Exception("Expected block expression: {}, found void");
+
+        var expr = new MParser(input).parseNextExpr();
+        if (expr == None) {
+            throw new Exception("Expected expression, found void");
         }
-        if (expression.length > 1) {
-            throw new Exception("Expected one block expression: {}, found multiple");
-        }
+        var expression = expr.unwrap();
 
         return PReturnSome({
-            kind: MExprKind.EWhile(condition[0], expression[0], false),
+            kind: MExprKind.EWhile(condition, expression, false),
             pos: {
                 path: min.pos.path,
                 min: min.pos.min,
-                max: max.pos.max
+                max: expression.pos.max
             },
             type: MType.mono(),
         });
@@ -108,21 +92,18 @@ class MLoopPath {
         if (conditionExpr.length > 1) {
             throw new Exception("Error parsing for(;;...)");
         }
-        var exprBlock = MParseBlocker.createBlock(input, Some(TBraceOpen), TBraceClose);
-        final max = exprBlock[exprBlock.length - 1];
-        var expression = new MParser(exprBlock).parseTree();
-        if (expression.length == 0) {
-            throw new Exception("Expected block expression: {}, found void");
+
+        var expr = new MParser(input).parseNextExpr();
+        if (expr == None) {
+            throw new Exception("Expected expression, found void");
         }
-        if (expression.length > 1) {
-            throw new Exception("Expected one block expression: {}, found multiple");
-        }
+        var expression = expr.unwrap();
         return PReturnSome({
-            kind: MExprKind.EFor(variable[0], condition[0], conditionExpr[0], expression[0]),
+            kind: MExprKind.EFor(variable[0], condition[0], conditionExpr[0], expression),
             pos: {
                 path: min.pos.path,
                 min: min.pos.min,
-                max: max.pos.max
+                max: expression.pos.max
             },
             type: MType.mono(),
         });

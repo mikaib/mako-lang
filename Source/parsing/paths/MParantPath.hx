@@ -37,7 +37,6 @@ class MParantPath {
 
         // -2: zero indexed + exclude ')'
         var subSlice = input.subslice(0, readIndex);
-        trace('${subSlice.map(t -> '${t.kind}')}');
         input.consume(readIndex);
         input.expect(TParantClose);
 
@@ -46,8 +45,7 @@ class MParantPath {
         }
         var max = subSlice[subSlice.length - 1].pos.max;
 
-        var parser = new MParser(subSlice);
-        var expressions = parser.parseTree();
+        var expressions = new MParser(subSlice).parseTree();
         if (expressions.length != 1) {
             throw new Exception('Expected 1 expr, found: ${expressions.length}');
         }

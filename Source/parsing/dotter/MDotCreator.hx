@@ -55,7 +55,6 @@ class MDotCreator {
                     children: [econd, ebody],
                 }
             case EFor(variable, cond, condExpr, expr):
-                var children = [];
                 return {
                     label: 'For',
                     children: [variable, cond, condExpr, expr].filter(v -> v != null),

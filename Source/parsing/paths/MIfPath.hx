@@ -16,16 +16,13 @@ class MIfPath {
     private static function parseElse(input: ArrayView<MToken>, currentIf: MExpr): MExpr {
         if (input.length == 0 || !input[0].kind.match(TKeyword(KElse))) {
             switch (currentIf.kind) {
-                case EIf(cond, eif, _):
-                    currentIf.kind = EIf(cond, eif, None);
-                default:
+                case EIf(cond, eif, _): currentIf.kind = EIf(cond, eif, None);
+                default: throw new Exception("Internal compiler error, reached unreachable path");
             }
             return currentIf;
         }
 
-        trace('${input.map(t -> '${t.kind}')}');
-
-        input.consume(1);
+        input.expect(TKeyword(KElse));
 
         var eElse: MExpr;
         if (input[0].kind.match(TKeyword(KIf))) {
@@ -36,15 +33,12 @@ class MIfPath {
                 case PNotParsed: throw new Exception("Error parsing else-if");
             };
         } else {
-            var eElseBlockTokens = MParseBlocker.createBlock(input, Some(TBraceOpen), TBraceClose);
-            eElseBlockTokens.expect(TBraceOpen);
-            eElseBlockTokens.expectBack(TBraceClose);
-            var eElseOpt = new MParser(eElseBlockTokens).intoMExpr();
-            if (eElseOpt.isNone()) {
+            var expr = new MParser(input).parseNextExpr();
+            if (expr == None) {
                 throw new Exception("Error parsing else");
             }
 
-            eElse = eElseOpt.unwrap();
+            eElse = expr.unwrap();
         }
 
         switch (currentIf.kind) {
@@ -65,29 +59,24 @@ class MIfPath {
         var minPos = input[0].pos.min;
         input.consume(1);
 
-        var condBlock = MParseBlocker.createBlock(input, Some(TParantOpen), TParantClose);
-        var condition = new MParser(condBlock).intoMExpr();
-        if (condition.isNone()) {
-            return PNotParsed;
+        var cond = new MParser(input).parseNextExpr();
+        if (cond == None) {
+            throw new Exception("Expected expression, found void");
         }
+        var condition = cond.unwrap();
 
-        var cond = condition.unwrap();
-
-        var exprBlock = MParseBlocker.createBlock(input, Some(TBraceOpen), TBraceClose);
-        exprBlock.expect(TBraceOpen);
-        var expression = new MParser(exprBlock).intoMExpr();
-        if (expression.isNone()) {
-            return PNotParsed;
+        var expr = new MParser(input).parseNextExpr();
+        if (expr == None) {
+            throw new Exception("Expected expression, found void");
         }
-
-        var expr = condition.unwrap();
+        var expression = expr.unwrap();
 
         var ifExpr: MExpr = {
-            kind: EIf(cond, expr, None),
+            kind: EIf(condition, expression, None),
             pos: {
                 path: path,
                 min: minPos,
-                max: expr.pos.max,
+                max: expression.pos.max,
             },
         };
 

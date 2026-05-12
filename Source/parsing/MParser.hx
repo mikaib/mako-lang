@@ -78,102 +78,97 @@ class MParser {
     public function parseTree(): MExprList {
         var ast = new MExprList();
         while (tokens.length > 0) {
-            var flowControl = switch (tokens[0].kind) {
-                case TKeyword(KIf):
-                    MIfPath.intoEIf(tokens);
-                case TParantOpen:
-                    MParantPath.intoEParent(tokens);
-                case TKeyword(KReturn):
-                    MReturnPath.intoEReturn(tokens);
-                case TBraceOpen:
-                    var block = MParseBlocker.createBlock(tokens, Some(TBraceOpen), TBraceClose);
-                    MBlockPath.intoEBlock(block);
-                default:
-                    PNotParsed;
+            var expr = parseNextExpr();
+            if (expr.hasValue()) {
+                ast.push(expr.unwrap());
             }
-
-            switch (flowControl) {
-                case PReturnSome(val): {
-                    ast.push(val);
-                    continue;
-                }
-                default:
-            }
-
-            if(tokens[0].kind.match(TKeyword(KWhile))
-            || tokens[0].kind.match(TKeyword(KDo))
-            || tokens[0].kind.match(TKeyword(KFor))
-            ) {
-                var flowControl = MLoopPath.intoLoop(tokens);
-                switch (flowControl) {
-                    case PReturnSome(val): {
-                        ast.push(val);
-                        continue;
-                    }
-                    default:
-                        throw new Exception("Could not parse operator");
-                }
-            }
-
-            var sentence = splitSentence(tokens);
-
-            if (MCallPath.isFuncCall(sentence)) {
-                var flowControl = MCallPath.parseFuncCall(sentence);
-                switch (flowControl) {
-                    case PReturnSome(val): {
-                        ast.push(val);
-                        continue;
-                    }
-                    default:
-                        throw new Exception("Could not parse call");
-                }
-            }
-
-            var parsed = false;
-            for (path in pathsList) {
-                var flowControl = path(sentence);
-
-                switch (flowControl) {
-                    case PReturnSome(val): {
-                        ast.push(val);
-                        parsed = true;
-                        break;
-                    }
-                    case PReturnEaten: {
-                        parsed = true;
-                        break;
-                    }
-                    case PNotParsed: continue;
-                }
-            }
-
-            if(MOperatorPath.IsOperator(sentence)) {
-                var flowControl = MOperatorPath.intoOperationAST(sentence, None);
-                switch (flowControl) {
-                    case PReturnSome(val): {
-                        ast.push(val);
-                        continue;
-                    }
-                    default:
-                        throw new Exception("Could not parse operator");
-                }
-            }
-
-            if (sentence.length == 1 && sentence[0].kind.match(TConst(_))) {
-                var flowControl = MConstPath.IntoEConst(sentence);
-                switch (flowControl) {
-                    case PReturnSome(val): {
-                        ast.push(val);
-                        continue;
-                    }
-                    default:
-                }
-            }
-            if (!parsed) {
-                trace('Not all tokens could be parsed: ${tokens.map(t -> '${t.kind}, ')}');
+            else {
                 return ast;
             }
         }
+
         return ast;
+    }
+
+    public function parseNextExpr(): MOption<MExpr> {
+        var flowControl = switch (tokens[0].kind) {
+            case TKeyword(KIf):
+                MIfPath.intoEIf(tokens);
+            case TParantOpen:
+                MParantPath.intoEParent(tokens);
+            case TKeyword(KReturn):
+                MReturnPath.intoEReturn(tokens);
+            case TBraceOpen:
+                var block = MParseBlocker.createBlock(tokens, Some(TBraceOpen), TBraceClose);
+                MBlockPath.intoEBlock(block);
+            default:
+                PNotParsed;
+        }
+
+        switch (flowControl) {
+            case PReturnSome(val): return Some(val);
+            case _: null;
+        }
+
+        if(tokens[0].kind.match(TKeyword(KWhile))
+            || tokens[0].kind.match(TKeyword(KDo))
+            || tokens[0].kind.match(TKeyword(KFor))
+        ) {
+            var flowControl = MLoopPath.intoLoop(tokens);
+            switch (flowControl) {
+                case PReturnSome(val): return Some(val);
+                default: throw new Exception("Could not parse loop");
+            }
+        }
+
+        var sentence = splitSentence(tokens);
+
+        if (MCallPath.isFuncCall(sentence)) {
+            var flowControl = MCallPath.parseFuncCall(sentence);
+            switch (flowControl) {
+                case PReturnSome(val): {
+                    return Some(val);
+                }
+                default:
+                    throw new Exception("Could not parse call");
+            }
+        }
+
+        for (path in pathsList) {
+            var flowControl = path(sentence);
+
+            switch (flowControl) {
+                case PReturnSome(val): {
+                    return Some(val);
+                }
+                case PReturnEaten: {
+                    return None;
+                }
+                case PNotParsed:
+                    continue;
+                }
+        }
+
+        if(MOperatorPath.IsOperator(sentence)) {
+            var flowControl = MOperatorPath.intoOperationAST(sentence, None);
+            switch (flowControl) {
+                case PReturnSome(val): {
+                    return Some(val);
+                }
+                default:
+                    throw new Exception("Could not parse operator");
+                }
+        }
+
+        if (sentence.length == 1 && sentence[0].kind.match(TConst(_))) {
+            var flowControl = MConstPath.IntoEConst(sentence);
+            switch (flowControl) {
+                case PReturnSome(val): return Some(val);
+                default: null;
+            }
+        }
+
+        trace('Not all tokens could be parsed: ${tokens.map(t -> '${t.kind}, ')}');
+        return None;
     }
 }
