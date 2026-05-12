@@ -9,8 +9,8 @@ enum MTokenKind {
     TConst(const: MConst);
     TKeyword(keyword: MTokenKeyword);
     TFuncAssign;
-    TParantOpen;
-    TParantClose;
+    TParentOpen;
+    TParentClose;
     TBraceOpen;
     TBraceClose;
     TBracketOpen;
@@ -85,8 +85,8 @@ class MTokenUtil {
             case TKeyword(k):
                 "Keyword(" + keywordToString(k) + ")";
 
-            case TParantOpen: "(";
-            case TParantClose: ")";
+            case TParentOpen: "(";
+            case TParentClose: ")";
             case TBraceOpen: "{";
             case TBraceClose: "}";
             case TBracketOpen: "[";

@@ -50,11 +50,11 @@ class MFunctionPath {
         input.consume(readIndex);
 
         // arguments
-        var argBlock = MParseBlocker.createBlock(input, Some(TParantOpen), TParantClose);
-        argBlock.consume(1); // Consume TParantOpen
+        var argBlock = MParseBlocker.createBlock(input, Some(TParentOpen), TParentClose);
+        argBlock.consume(1); // Consume TParentOpen
 
         while (argBlock.length > 0) {
-            if (argBlock[0].kind.match(TParantClose)) {
+            if (argBlock[0].kind.match(TParentClose)) {
                 argBlock.consume(1);
                 break;
             }
@@ -76,7 +76,7 @@ class MFunctionPath {
             }
 
             if (!argBlock[0].kind.match(TComma)) {
-                if (!argBlock[0].kind.match(TParantClose)) {
+                if (!argBlock[0].kind.match(TParentClose)) {
                     throw new Exception('Expected ), got ${argBlock[0]}');
                 }
                 break;

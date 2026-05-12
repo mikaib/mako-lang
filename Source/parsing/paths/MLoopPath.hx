@@ -68,10 +68,10 @@ class MLoopPath {
     private static function intoForLoop(input: ArrayView<MToken>): ParserFlowControl {
         final min = input[0];
         input.expect(TKeyword(KFor));
-        var parantBlock = MParseBlocker.createBlock(input, Some(TParantOpen), TParantClose);
-        parantBlock.expect(TParantOpen);
-        parantBlock.expectBack(TParantClose);
-        final parts = parantBlock.splitDepthCounting(TSemiColon);
+        var parentBlock = MParseBlocker.createBlock(input, Some(TParentOpen), TParentClose);
+        parentBlock.expect(TParentOpen);
+        parentBlock.expectBack(TParentClose);
+        final parts = parentBlock.splitDepthCounting(TSemiColon);
         for (p in parts) {
             trace(p);
             trace(p.map(t -> '${t}'));

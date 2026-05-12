@@ -51,8 +51,8 @@ class MTokenViewTools {
                 }
             } else {
                 switch (view[readIndex].kind) {
-                    case TParantOpen: ParantDepth++;
-                    case TParantClose: ParantDepth--;
+                    case TParentOpen: ParantDepth++;
+                    case TParentClose: ParantDepth--;
                     case TBraceOpen: BraceDepth++;
                     case TBraceClose: BraceDepth--;
                     case TBracketOpen: BracketDepth++;
