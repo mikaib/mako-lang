@@ -99,7 +99,7 @@ class MTokenUtil {
             case TComma: ",";
             case TDot: ".";
 
-            default : throw new NotImplementedException('Tried to print: ${kind}, but no implementation was foundn');
+            default : throw new NotImplementedException('Tried to print: ${kind}, but no implementation was found');
         }
     }
 
@@ -118,7 +118,7 @@ class MTokenUtil {
             case KWhile: "while";
             case KDo: "do";
             case KFor: "for";
-            default : throw new NotImplementedException('Tried to print: ${k}, but no implementation was foundn');
+            default : throw new NotImplementedException('Tried to print: ${k}, but no implementation was found');
         }
     }
 
@@ -153,7 +153,7 @@ class MTokenUtil {
             case OOrAssign: "|=";
             case OAndAssign: "&=";
             case OXorAssign: "^=";
-            default : throw new NotImplementedException('Tried to print: ${op}, but no implementation was foundn');
+            default : throw new NotImplementedException('Tried to print: ${op}, but no implementation was found');
         }
     }
 }
