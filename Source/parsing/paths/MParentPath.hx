@@ -8,20 +8,20 @@ import core.MArrayView.ArrayView;
 import core.MTokenViewTools;
 using core.MTokenViewTools;
 
-class MParantPath {
+class MParentPath {
     public static function intoEParent(input: ArrayView<MToken>): ParserFlowControl {
         var minToken = input[0];
 
-        input.expect(TParantOpen);
+        input.expect(TParentOpen);
 
 
         var readIndex = 0;
         var depth = 1;
         while (input.length > readIndex) {
-            if (input[readIndex].kind == TParantOpen) {
+            if (input[readIndex].kind == TParentOpen) {
                 depth++;
             }
-            if (input[readIndex].kind == TParantClose) {
+            if (input[readIndex].kind == TParentClose) {
                 depth--;
             }
             if (depth == 0) {
@@ -30,24 +30,22 @@ class MParantPath {
             readIndex++;
         }
 
-        // Check depth == 0 again, might have exited by EOF
+        // Check depth == 0 again, might have ended the loop by running out of tokens
         if (depth != 0) {
-            throw new Exception("");
+            throw new Exception("Closing parenthesis not found");
         }
 
         // -2: zero indexed + exclude ')'
         var subSlice = input.subslice(0, readIndex);
-        trace('${subSlice.map(t -> '${t.kind}')}');
         input.consume(readIndex);
-        input.expect(TParantClose);
+        input.expect(TParentClose);
 
         if (subSlice.length < 1) {
             return PReturnEaten;
         }
         var max = subSlice[subSlice.length - 1].pos.max;
 
-        var parser = new MParser(subSlice);
-        var expressions = parser.parseTree();
+        var expressions = new MParser(subSlice).parseTree();
         if (expressions.length != 1) {
             throw new Exception('Expected 1 expr, found: ${expressions.length}');
         }

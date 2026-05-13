@@ -22,7 +22,7 @@ class MOperatorPath {
                 return 4;
             case OLogicalOr:
                 return 5;
-            case ONotEaqual, OEqual, OGreatherThen, OGreaterThenEqualTo, OLessThen, OLessThenEqualTo:
+            case ONotEaqual, OEqual, OGreatherThen, OGreaterThenEqualTo, OLessThen, OLessThenEqualTo, OAddAssign, OSubtractAssign, OMultiplyAssign, ODivideAssign, OOrAssign, OAndAssign, OXorAssign:
                 return 6;
             default:
                 throw new Exception('Unexpected operator: $op');
@@ -32,12 +32,12 @@ class MOperatorPath {
     private static function makeExpressionBlock(input: ArrayView<MToken>): ParserFlowControl {
         var index = 0;
         var run = true;
-        var parantDepth = 0;
+        var parentDepth = 0;
         var blockDepth = 0;
         while (input.length > index && run) {
             switch (input[index].kind) {
                 case MTokenKind.TTokenOperator(_):
-                    if (parantDepth == 0 && blockDepth == 0) {
+                    if (parentDepth == 0 && blockDepth == 0) {
                         run = false;
                     }
                     else {
@@ -49,11 +49,11 @@ class MOperatorPath {
                 case TBraceOpen:
                     blockDepth += 1;
                     index++;
-                case TParantOpen:
-                    parantDepth += 1;
+                case TParentOpen:
+                    parentDepth += 1;
                     index++;
-                case TParantClose:
-                    parantDepth -= 1;
+                case TParentClose:
+                    parentDepth -= 1;
                     index++;
                 default:
                     index++;
@@ -85,7 +85,14 @@ class MOperatorPath {
             MTokenOperator.OGreatherThen => MBinop.GreaterThen,
             MTokenOperator.OGreaterThenEqualTo => MBinop.GreaterThenEqualTo,
             MTokenOperator.OLessThen => MBinop.LessThen,
-            MTokenOperator.OLessThenEqualTo => MBinop.LessThenEqualTo
+            MTokenOperator.OLessThenEqualTo => MBinop.LessThenEqualTo,
+            MTokenOperator.OAddAssign => MBinop.AssignOp(MBinop.Add),
+            MTokenOperator.OSubtractAssign => MBinop.AssignOp(MBinop.Sub),
+            MTokenOperator.OMultiplyAssign => MBinop.AssignOp(MBinop.Mul),
+            MTokenOperator.ODivideAssign => MBinop.AssignOp(MBinop.Div),
+            MTokenOperator.OOrAssign => MBinop.AssignOp(MBinop.BitOr),
+            MTokenOperator.OAndAssign => MBinop.AssignOp(MBinop.BitAnd),
+            MTokenOperator.OXorAssign => MBinop.AssignOp(MBinop.BitXor),
         ];
 
         final result = table[op];
@@ -154,10 +161,10 @@ class MOperatorPath {
         var depth = 0;
         var readIndex = 0;
         while (input.length > readIndex) {
-            if (input[readIndex].kind.match(TParantOpen)) {
+            if (input[readIndex].kind.match(TParentOpen)) {
                 depth++;
             }
-            else if (input[readIndex].kind.match(TParantClose)) {
+            else if (input[readIndex].kind.match(TParentClose)) {
                 depth--;
             }
 
@@ -209,15 +216,16 @@ class MOperatorPath {
     // Is an operator EXPR if there is an operator Token in the stream in a depth of 0.
     // So 1 + 1 is true
     // if(1 + 1) is false
-    // But (1 + 1) is also false, will parse paranthesis first.
+    // But (1 + 1) is also false, will parse parenthesis first.
     public static function IsOperator(input: ArrayView<MToken>): Bool {
+        trace(input.map(t -> '${t.kind}'));
         var index = 0;
-        var parantDepth = 0;
+        var parentDepth = 0;
         var blockDepth = 0;
         while (input.length > index) {
             switch (input[index].kind) {
                 case MTokenKind.TTokenOperator(_):
-                    if (parantDepth == 0 && blockDepth == 0) {
+                    if (parentDepth == 0 && blockDepth == 0) {
                         return true;
                     }
                     else {
@@ -229,11 +237,11 @@ class MOperatorPath {
                 case TBraceOpen:
                     blockDepth += 1;
                     index++;
-                case TParantOpen:
-                    parantDepth += 1;
+                case TParentOpen:
+                    parentDepth += 1;
                     index++;
-                case TParantClose:
-                    parantDepth -= 1;
+                case TParentClose:
+                    parentDepth -= 1;
                     index++;
                 default:
                     index++;
@@ -242,4 +250,3 @@ class MOperatorPath {
         return false;
     }
 }
-

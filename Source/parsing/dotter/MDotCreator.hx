@@ -49,8 +49,16 @@ class MDotCreator {
                     label: 'BLOCK',
                     children: expressions,
                 };
-            case EWhile(econd, ebody):
-                throw new NotImplementedException();
+            case EWhile(econd, ebody, isDoWhile):
+                return {
+                    label: '${if (isDoWhile) { 'do ';} else {'';}}While',
+                    children: [econd, ebody],
+                }
+            case EFor(variable, cond, condExpr, expr):
+                return {
+                    label: 'For',
+                    children: [variable, cond, condExpr, expr].filter(v -> v != null),
+                }
             case EReturn(expr):
                 return {
                     label: "Return",
@@ -66,6 +74,11 @@ class MDotCreator {
                     label: 'func ${f.name} (${f.args.map(arg -> '${arg.name}, ${arg.type}')}): ${f.returnType}',
                     children: [f.expr],
                 };
+            case EObjectAccess(left, right):
+                return {
+                    label: 'EObjAccess ${mExpr.type}',
+                    children: [left, right],
+                }
             case EIf(econd, eif, eelse):
                 var expressions = [econd, eif];
                 if (eelse.hasValue()) {

@@ -21,10 +21,10 @@ class MCallPath {
         if (!input[0].kind.match(TConst(CIdent(_)))) {
             return false;
         }
-        if (!input[1].kind.match(TParantOpen)) {
+        if (!input[1].kind.match(TParentOpen)) {
             return false;
         }
-        if (!input[input.length - 1].kind.match(TParantClose)) {
+        if (!input[input.length - 1].kind.match(TParentClose)) {
             return false;
         }
         return true;
@@ -42,16 +42,12 @@ class MCallPath {
         }
         input.consume(1);
 
-        trace('${input.map(t -> '${t.kind}')}');
-
-        var block = MParseBlocker.createBlock(input, Some(TParantOpen), TParantClose);
+        var block = MParseBlocker.createBlock(input, Some(TParentOpen), TParentClose);
         final max = block[block.length - 1];
-        MTokenViewTools.expect(block, TParantOpen);
-        MTokenViewTools.expectBack(block, TParantClose);
+        MTokenViewTools.expect(block, TParentOpen);
+        MTokenViewTools.expectBack(block, TParentClose);
 
         var arguments = MTokenViewTools.splitDepthCounting(block, TComma);
-
-        trace('${arguments.map(t -> '\n${t.map(k -> '${k.kind}')}')}');
 
         var args = arguments.map(a -> {
             var parser = new MParser(a).intoMExpr();
@@ -61,15 +57,18 @@ class MCallPath {
             parser.unwrap();
         });
 
-        trace('${args.map(t -> '\n${t}')}');
-
-        return PReturnSome({
+        var call: MExpr = {
             kind: ECall(funcNameExpr, args),
             pos: {
                 path: min.pos.path,
                 min: min.pos.min,
                 max: max.pos.max,
             },
-        });
+        };
+
+        if (input.length > 0 && input[0].kind.equals(TDot)) {
+            return MObjectAccessPath.intoObjectAccess(call, input);
+        }
+        return PReturnSome(call);
     }
 }

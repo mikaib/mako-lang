@@ -62,6 +62,22 @@ class Main {
 
         var code = "
             func main() -> i32 {
+                for(var x: i32 = 0; i < 5; x++) {
+                    x -= 1;
+                }
+                do {1 + 2} while (2 == 3.4)
+                while(1.1 == 1) {
+                    x += 1;
+                }
+                if (1 + 1 == 0) {
+                    2 + 3 * 5;
+                } else if (9 - 0) {
+                    1 - 4;
+                } else {
+                    78 - 0.2;
+                }
+                x().y().z().a();
+
                 var x = 0.0;
                 return 2 + x;
             }
