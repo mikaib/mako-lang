@@ -11,17 +11,17 @@ import typing.MType;
 using core.MTokenViewTools;
 
 class MLoopPath {
-    private static function intoDoWhileLoop(input: ArrayView<MToken>): ParserFlowControl {
+    private static function intoDoWhileLoop(input: ArrayView<MToken>, context: Context): ParserFlowControl {
         final min = input[0];
         input.expect(TKeyword(KDo));
-        var expr = new MParser(input).parseNextExpr();
+        var expr = new MParser(input, context).parseNextExpr();
         if (expr == None) {
             throw new Exception("Expected expression, found void");
         }
         var expression = expr.unwrap();
 
         input.expect(TKeyword(KWhile));
-        var cond = new MParser(input).parseNextExpr();
+        var cond = new MParser(input, context).parseNextExpr();
         if (cond == None) {
             throw new Exception("Expected expression, found void");
         }
@@ -38,17 +38,17 @@ class MLoopPath {
         });
     }
 
-    private static function intoWhileLoop(input: ArrayView<MToken>): ParserFlowControl{
+    private static function intoWhileLoop(input: ArrayView<MToken>, context: Context): ParserFlowControl{
         final min = input[0];
         input.expect(TKeyword(KWhile));
-        var cond = new MParser(input).parseNextExpr();
+        var cond = new MParser(input, context).parseNextExpr();
         if (cond == None) {
             throw new Exception("Expected expression, found void");
         }
         var condition = cond.unwrap();
 
 
-        var expr = new MParser(input).parseNextExpr();
+        var expr = new MParser(input, context).parseNextExpr();
         if (expr == None) {
             throw new Exception("Expected expression, found void");
         }
@@ -65,15 +65,15 @@ class MLoopPath {
         });
     }
 
-    private static function intoForLoop(input: ArrayView<MToken>): ParserFlowControl {
+    private static function intoForLoop(input: ArrayView<MToken>, context: Context): ParserFlowControl {
         final min = input[0];
         input.expect(TKeyword(KFor));
         var parentBlock = MParseBlocker.createBlock(input, Some(TParentOpen), TParentClose);
         parentBlock.expect(TParentOpen);
         parentBlock.expectBack(TParentClose);
-        final parts = new MParser(parentBlock).expectExprs(3, None);
+        final parts = new MParser(parentBlock, context).expectExprs(3, None);
 
-        var expr = new MParser(input).parseNextExpr();
+        var expr = new MParser(input, context).parseNextExpr();
         if (expr == None) {
             throw new Exception("Expected expression, found void");
         }
@@ -89,18 +89,18 @@ class MLoopPath {
         });
     }
 
-    public static function intoLoop(input: ArrayView<MToken>): ParserFlowControl {
+    public static function intoLoop(input: ArrayView<MToken>, context: Context): ParserFlowControl {
         if (input.length == 0) {
             throw new Exception("Internal compiler error: Input length was 0");
         }
 
         return switch(input[0].kind) {
             case TKeyword(KDo):
-                intoDoWhileLoop(input);
+                intoDoWhileLoop(input, context);
             case TKeyword(KWhile):
-                intoWhileLoop(input);
+                intoWhileLoop(input, context);
             case TKeyword(KFor):
-                intoForLoop(input);
+                intoForLoop(input, context);
             default:
                 throw new Exception('Expected loop, got ${input[0].kind}');
         }

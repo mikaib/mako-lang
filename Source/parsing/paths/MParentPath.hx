@@ -9,7 +9,7 @@ import core.MTokenViewTools;
 using core.MTokenViewTools;
 
 class MParentPath {
-    public static function intoEParent(input: ArrayView<MToken>): ParserFlowControl {
+    public static function intoEParent(input: ArrayView<MToken>, context: Context): ParserFlowControl {
         var minToken = input[0];
 
         input.expect(TParentOpen);
@@ -45,7 +45,7 @@ class MParentPath {
         }
         var max = subSlice[subSlice.length - 1].pos.max;
 
-        var expressions = new MParser(subSlice).parseTree();
+        var expressions = new MParser(subSlice, context).parseTree();
         if (expressions.length != 1) {
             throw new Exception('Expected 1 expr, found: ${expressions.length}');
         }

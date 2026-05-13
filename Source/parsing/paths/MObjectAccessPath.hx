@@ -9,9 +9,9 @@ import haxe.exceptions.NotImplementedException;
 using core.MTokenViewTools;
 
 class MObjectAccessPath {
-    public static function intoObjectAccess(left: MExpr, input: ArrayView<MToken>): ParserFlowControl {
+    public static function intoObjectAccess(left: MExpr, input: ArrayView<MToken>, context: Context): ParserFlowControl {
         input.expect(TDot);
-        var rightControl = MCallPath.parseFuncCall(input);
+        var rightControl = MCallPath.parseFuncCall(input, context);
         var right = switch rightControl {
             case PReturnSome(r):
                 r;

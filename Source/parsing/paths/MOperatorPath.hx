@@ -29,7 +29,7 @@ class MOperatorPath {
         }
     }
 
-    private static function makeExpressionBlock(input: ArrayView<MToken>): ParserFlowControl {
+    private static function makeExpressionBlock(input: ArrayView<MToken>, context: Context): ParserFlowControl {
         var index = 0;
         var run = true;
         var parentDepth = 0;
@@ -66,7 +66,7 @@ class MOperatorPath {
 
         var block = input.subslice(0, index);
         input.consume(index);
-        var expr = new MParser(block).intoMExpr();
+        var expr = new MParser(block, context).intoMExpr();
         if (expr.isNone()) {
             return PNotParsed;
         }
@@ -119,9 +119,9 @@ class MOperatorPath {
         throw new Exception('Unexpected unop operator: $op');
     }
 
-    public static function intoOperationAST(input: ArrayView<MToken>, leftAST: MOption<MExpr>): ParserFlowControl {
+    public static function intoOperationAST(input: ArrayView<MToken>, leftAST: MOption<MExpr>, context: Context): ParserFlowControl {
         if (leftAST == None) {
-            var expr = makeExpressionBlock(input);
+            var expr = makeExpressionBlock(input, context);
             switch(expr) {
                 case PReturnSome(ast):
                     leftAST = Some(ast);
@@ -152,7 +152,7 @@ class MOperatorPath {
                     }
                 };
                 if (input.length > 0) {
-                    return intoOperationAST(input, Some(expr));
+                    return intoOperationAST(input, Some(expr), context);
                 }
                 return PReturnSome(expr);
             }
@@ -187,7 +187,7 @@ class MOperatorPath {
         var right = input.subslice(0, readIndex);
         input.consume(readIndex);
         var lastToken = right[right.length - 1];
-        var expr = new MParser(right).intoMExpr();
+        var expr = new MParser(right, context).intoMExpr();
         if (expr.isNone()) {
             return PNotParsed;
         }
@@ -208,7 +208,7 @@ class MOperatorPath {
         };
 
         if (input.length > 0) {
-            return intoOperationAST(input, Some(expr));
+            return intoOperationAST(input, Some(expr), context);
         }
         return PReturnSome(expr);
     }

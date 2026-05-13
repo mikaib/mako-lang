@@ -7,7 +7,7 @@ import core.MOptionKind.None;
 using core.MTokenViewTools;
 
 class MReturnPath {
-    public static function intoEReturn(input: ArrayView<MToken>): ParserFlowControl {
+    public static function intoEReturn(input: ArrayView<MToken>, context: Context): ParserFlowControl {
         if (input.length == 0) {
             return PNotParsed;
         }
@@ -18,7 +18,7 @@ class MReturnPath {
         input.expect(TKeyword(KReturn));
 
         var block = MParseBlocker.createBlock(input, None, TSemiColon);
-        var expression = new MParser(block).intoMExpr();
+        var expression = new MParser(block, context).intoMExpr();
         if (expression.isNone()) {
             return PNotParsed;
         }

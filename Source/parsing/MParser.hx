@@ -27,10 +27,12 @@ enum ParserFlowControl {
 }
 
 class MParser {
+    var context: Context;
     var tokens: ArrayView<MToken>;
 
-    public function new(_tokens: ArrayView<MToken>) {
+    public function new(_tokens: ArrayView<MToken>, _context: Context) {
         tokens = _tokens;
+        context = _context;
     }
 
     public function intoMExpr(): MOption<MExpr> {
@@ -38,12 +40,8 @@ class MParser {
             return None;
         }
 
-        var expressions = parseTree();
-        if (expressions.length > 1) {
-            throw new NotImplementedException("expressions length was more then 1");
-        }
-
-        return Some(expressions[0]);
+        var expressions = parseNextExpr();
+        return Some(expressions);
     }
 
     private function splitSentence(input: ArrayView<MToken>): ArrayView<MToken> {
@@ -102,14 +100,14 @@ class MParser {
     public function parseNextExpr(): MOption<MExpr> {
         var flowControl = switch (tokens[0].kind) {
             case TKeyword(KIf):
-                MIfPath.intoEIf(tokens);
+                MIfPath.intoEIf(tokens, context);
             case TParentOpen:
-                MParentPath.intoEParent(tokens);
+                MParentPath.intoEParent(tokens, context);
             case TKeyword(KReturn):
-                MReturnPath.intoEReturn(tokens);
+                MReturnPath.intoEReturn(tokens, context);
             case TBraceOpen:
                 var block = MParseBlocker.createBlock(tokens, Some(TBraceOpen), TBraceClose);
-                MBlockPath.intoEBlock(block);
+                MBlockPath.intoEBlock(block, context);
             default:
                 PNotParsed;
         }
@@ -123,11 +121,7 @@ class MParser {
             || tokens[0].kind.match(TKeyword(KDo))
             || tokens[0].kind.match(TKeyword(KFor))
         ) {
-            var flowControl = MLoopPath.intoLoop(tokens);
-            switch (flowControl) {
-                case PReturnSome(val): return Some(val);
-                default: throw new Exception("Could not parse loop");
-            }
+            return Some(MLoopPath.intoLoop(tokens, context));
         }
 
         var sentence = splitSentence(tokens);
@@ -136,7 +130,7 @@ class MParser {
         }
 
         if (MCallPath.isFuncCall(sentence)) {
-            var flowControl = MCallPath.parseFuncCall(sentence);
+            var flowControl = MCallPath.parseFuncCall(sentence, context);
             switch (flowControl) {
                 case PReturnSome(val): {
                     return Some(val);
@@ -156,9 +150,9 @@ class MParser {
         };
 
         var control: MOption<ParserFlowControl> = switch sentence[0].kind {
-            case TKeyword(KFunc): Some(MFunctionPath.intoEFunction(sentence, accessSpecifier));
-            case TKeyword(KVar): Some(MVarsPath.intoEVars(sentence, accessSpecifier));
-            case TKeyword(KConst): Some(MVarsPath.intoEVars(sentence, accessSpecifier));
+            case TKeyword(KFunc): Some(MFunctionPath.intoEFunction(sentence, accessSpecifier, context));
+            case TKeyword(KVar): Some(MVarsPath.intoEVars(sentence, accessSpecifier, context));
+            case TKeyword(KConst): Some(MVarsPath.intoEVars(sentence, accessSpecifier, context));
             default: None;
         };
 
@@ -171,7 +165,7 @@ class MParser {
         }
 
         if(MOperatorPath.IsOperator(sentence)) {
-            var flowControl = MOperatorPath.intoOperationAST(sentence, None);
+            var flowControl = MOperatorPath.intoOperationAST(sentence, None, context);
             switch (flowControl) {
                 case PReturnSome(val): return Some(val);
                 default: throw new Exception("Could not parse operator");
@@ -179,7 +173,7 @@ class MParser {
         }
 
         if (sentence.length == 1 && sentence[0].kind.match(TConst(_))) {
-            var flowControl = MConstPath.IntoEConst(sentence);
+            var flowControl = MConstPath.IntoEConst(sentence, context);
             switch (flowControl) {
                 case PReturnSome(val): return Some(val);
                 default: null;

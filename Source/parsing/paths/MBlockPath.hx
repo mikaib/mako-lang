@@ -6,7 +6,7 @@ import lexing.MTokenKind;
 using core.MTokenViewTools;
 
 class MBlockPath {
-    public static function intoEBlock(input: ArrayView<MToken>): ParserFlowControl {
+    public static function intoEBlock(input: ArrayView<MToken>, context: Context): ParserFlowControl {
         if (input.length == 0) {
             return PReturnEaten;
         }
@@ -17,7 +17,7 @@ class MBlockPath {
         input.expect(TBraceOpen);
         input.expectBack(TBraceClose);
 
-        var parser = new MParser(input);
+        var parser = new MParser(input, context);
         var expressions = parser.parseTree();
 
         return PReturnSome({

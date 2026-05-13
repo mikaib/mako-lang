@@ -13,7 +13,7 @@ using core.MTokenViewTools;
 
 class MIfPath {
 
-    private static function parseElse(input: ArrayView<MToken>, currentIf: MExpr): MExpr {
+    private static function parseElse(input: ArrayView<MToken>, currentIf: MExpr, context: Context): MExpr {
         if (input.length == 0 || !input[0].kind.match(TKeyword(KElse))) {
             switch (currentIf.kind) {
                 case EIf(cond, eif, _): currentIf.kind = EIf(cond, eif, None);
@@ -26,14 +26,14 @@ class MIfPath {
 
         var eElse: MExpr;
         if (input[0].kind.match(TKeyword(KIf))) {
-            var control = intoEIf(input);
+            var control = intoEIf(input, context);
             eElse = switch (control) {
                 case PReturnSome(v): v;
                 case PReturnEaten: throw new Exception("Error parsing else-if");
                 case PNotParsed: throw new Exception("Error parsing else-if");
             };
         } else {
-            var expr = new MParser(input).parseNextExpr();
+            var expr = new MParser(input, context).parseNextExpr();
             if (expr == None) {
                 throw new Exception("Error parsing else");
             }
@@ -50,7 +50,7 @@ class MIfPath {
         return currentIf;
     }
 
-    public static function intoEIf(input: ArrayView<MToken>): ParserFlowControl {
+    public static function intoEIf(input: ArrayView<MToken>, context: Context): ParserFlowControl {
         if (input.length == 0 || !input[0].kind.match(TKeyword(KIf))) {
             return PNotParsed;
         }
@@ -59,13 +59,13 @@ class MIfPath {
         var minPos = input[0].pos.min;
         input.consume(1);
 
-        var cond = new MParser(input).parseNextExpr();
+        var cond = new MParser(input, context).parseNextExpr();
         if (cond == None) {
             throw new Exception("Expected expression, found void");
         }
         var condition = cond.unwrap();
 
-        var expr = new MParser(input).parseNextExpr();
+        var expr = new MParser(input, context).parseNextExpr();
         if (expr == None) {
             throw new Exception("Expected expression, found void");
         }
@@ -80,6 +80,6 @@ class MIfPath {
             },
         };
 
-        return PReturnSome(parseElse(input, ifExpr));
+        return PReturnSome(parseElse(input, ifExpr, context));
     }
 }

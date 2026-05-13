@@ -30,10 +30,10 @@ class MCallPath {
         return true;
     }
 
-    public static function parseFuncCall(input: ArrayView<MToken>){
+    public static function parseFuncCall(input: ArrayView<MToken>, context: Context): ParserFlowControl{
         final min = input[0];
 
-        var funcName = MConstPath.IntoEConst(input.subslice(0, 1));
+        var funcName = MConstPath.IntoEConst(input.subslice(0, 1), context);
         var funcNameExpr = switch funcName {
             case PReturnSome(s):
                 s;
@@ -50,7 +50,7 @@ class MCallPath {
         var arguments = MTokenViewTools.splitDepthCounting(block, TComma);
 
         var args = arguments.map(a -> {
-            var parser = new MParser(a).intoMExpr();
+            var parser = new MParser(a, context).intoMExpr();
             if (parser.isNone()) {
                 throw new Exception("Unexpected None");
             }
@@ -67,7 +67,7 @@ class MCallPath {
         };
 
         if (input.length > 0 && input[0].kind.equals(TDot)) {
-            return MObjectAccessPath.intoObjectAccess(call, input);
+            return MObjectAccessPath.intoObjectAccess(call, input, context);
         }
         return PReturnSome(call);
     }

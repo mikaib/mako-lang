@@ -16,7 +16,7 @@ import core.MAccessLevel;
 using core.MTokenViewTools;
 
 class MFunctionPath {
-    public static function intoEFunction(input: ArrayView<MToken>, accessLevel: MAccessLevel): ParserFlowControl {
+    public static function intoEFunction(input: ArrayView<MToken>, accessLevel: MAccessLevel, context: Context): ParserFlowControl {
         var readIndex = 0;
         var func: MFuncDecl = {};
         var minToken = input[0];
@@ -86,7 +86,7 @@ class MFunctionPath {
 
         var funcBlock = MParseBlocker.createBlock(input, Some(TBraceOpen), TBraceClose);
         var max = funcBlock[funcBlock.length - 1].pos.max;
-        var expression = MBlockPath.intoEBlock(funcBlock);
+        var expression = MBlockPath.intoEBlock(funcBlock, context);
         switch (expression) {
             case PReturnSome(v):
                 func.expr = v;

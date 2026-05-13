@@ -87,7 +87,7 @@ class Main {
         var tokens = lexer.lexTokens();
         trace(tokens.map(t -> '\n$t'));
 
-        var parser = new MParser(new ArrayView(tokens));
+        var parser = new MParser(new ArrayView(tokens), {});
         var ast = parser.parseTree();
 
         var typer = new MTypeSystem(ast, {});

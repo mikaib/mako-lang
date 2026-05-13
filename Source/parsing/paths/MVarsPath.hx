@@ -12,7 +12,7 @@ import core.MAccessLevel;
 
 class MVarsPath {
 
-    public static function intoEVars(input: ArrayView<MToken>, accessLevel: MAccessLevel): ParserFlowControl {
+    public static function intoEVars(input: ArrayView<MToken>, accessLevel: MAccessLevel, context: Context): ParserFlowControl {
         trace(input.map(t -> '${t.kind}'));
         var readIndex = 0;
         var minToken = input[0];
@@ -66,7 +66,7 @@ class MVarsPath {
 
         var expression = null;
 
-        var expressionTokens = new MParser(input).intoMExpr();
+        var expressionTokens = new MParser(input, context).intoMExpr();
         if (expressionTokens.hasValue()) {
             expression = expressionTokens.unwrap();
         }
