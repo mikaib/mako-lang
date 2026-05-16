@@ -4,16 +4,17 @@ import parsing.MParser.ParserFlowControl;
 import lexing.MToken;
 import core.MArrayView.ArrayView;
 import lexing.MTokenKind;
-import core.MVarDecl;
 import core.MConst;
 import typing.MType;
 import haxe.Exception;
 import core.MAccessLevel;
+import error.MErrorKind;
+
+using core.MTokenViewTools;
 
 class MVarsPath {
 
     public static function intoEVars(input: ArrayView<MToken>, accessLevel: MAccessLevel, context: Context): ParserFlowControl {
-        trace(input.map(t -> '${t.kind}'));
         var readIndex = 0;
         var minToken = input[0];
 
@@ -28,7 +29,7 @@ class MVarsPath {
                 readIndex += 1;
                 false;
             default:
-                throw new Exception('Expected const or var, found: ${input[readIndex].kind}');
+                throw new Exception('Internal compiler error: Expected const or var, found: ${input[readIndex].kind}');
         };
 
         // Variable name
@@ -39,7 +40,8 @@ class MVarsPath {
                     readIndex += 1;
                     v;
                 default:
-                    throw new Exception('Error parsing var: ${input[readIndex].kind}');
+                    context.emitError(MErrorKind.ParserExpectedVariableName, input.intoArray());
+                    return PParseError;
             }
 
         // Type
@@ -54,25 +56,16 @@ class MVarsPath {
                 MType.mono();
         }
 
-        if (!input[readIndex].kind.match(TTokenOperator(OAssign))) {
-            throw new Exception('Expected =, got ${input[readIndex].kind}');
-        }
-        readIndex++;
-
         input.consume(readIndex);
+
+        input.expect(TTokenOperator(OAssign), context);
 
         // variable expression
         var max = input[input.length - 1].pos.max;
 
-        var expression = null;
-
-        var expressionTokens = new MParser(input, context).intoMExpr();
-        if (expressionTokens.hasValue()) {
-            expression = expressionTokens.unwrap();
-        }
-
-        if (expressionTokens.hasValue()) {
-            expression = expressionTokens.unwrap();
+        var expression = switch new MParser(input, context).parseNextExpr() {
+            case PReturnSome(e): e;
+            default: return PParseError;
         }
 
         return PReturnSome(

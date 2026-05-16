@@ -2,18 +2,15 @@ package parsing.paths;
 import parsing.MParser.ParserFlowControl;
 import lexing.MToken;
 import core.MArrayView.ArrayView;
-import haxe.Exception;
 import lexing.MTokenKind;
-import core.MArrayView.ArrayView;
-import core.MTokenViewTools;
+import error.MErrorKind;
 using core.MTokenViewTools;
 
 class MParentPath {
     public static function intoEParent(input: ArrayView<MToken>, context: Context): ParserFlowControl {
         var minToken = input[0];
 
-        input.expect(TParentOpen);
-
+        input.expect(TParentOpen, context);
 
         var readIndex = 0;
         var depth = 1;
@@ -32,25 +29,30 @@ class MParentPath {
 
         // Check depth == 0 again, might have ended the loop by running out of tokens
         if (depth != 0) {
-            throw new Exception("Closing parenthesis not found");
+            context.emitError(MErrorKind.ParserMissingClosingParenthesis, input.intoArray());
+            return PParseError;
         }
 
-        // -2: zero indexed + exclude ')'
         var subSlice = input.subslice(0, readIndex);
         input.consume(readIndex);
-        input.expect(TParentClose);
+        var max = input[0].pos.max;
+        input.expect(TParentClose, context);
 
         if (subSlice.length < 1) {
-            return PReturnEaten;
+            context.emitError(MErrorKind.ParserExpectedExprInParenthesis, input.intoArray());
+            return PParseError;
         }
-        var max = subSlice[subSlice.length - 1].pos.max;
 
-        var expressions = new MParser(subSlice, context).parseTree();
-        if (expressions.length != 1) {
-            throw new Exception('Expected 1 expr, found: ${expressions.length}');
+        var expression = switch new MParser(subSlice, context).parseNextExpr() {
+            case PReturnSome(e): e;
+            default: return PParseError;
+        }
+        if (subSlice.length > 0) {
+            context.emitError(MErrorKind.ParserExpectedStreamEnd, subSlice.intoArray());
+            return PParseError;
         }
         return PReturnSome({
-            kind: MExprKind.EParenthesis(expressions[0]),
+            kind: MExprKind.EParenthesis(expression),
             pos: {
                 min: minToken.pos.min,
                 max: max,

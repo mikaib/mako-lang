@@ -8,9 +8,9 @@ import haxe.macro.Expr.Constant;
 import lexing.MTokenKind;
 import core.MOptionKind;
 import core.MTokenViewTools;
-import haxe.Exception;
 import parsing.MExpr;
 import core.MConst;
+import error.MErrorKind;
 using core.MTokenViewTools;
 
 class MCallPath {
@@ -31,31 +31,42 @@ class MCallPath {
     }
 
     public static function parseFuncCall(input: ArrayView<MToken>, context: Context): ParserFlowControl{
+        if (input.length == 0) {
+            context.emitError(MErrorKind.ParserExpectedFunctionName, input.intoArray());
+            return PParseError;
+        }
         final min = input[0];
 
         var funcName = MConstPath.IntoEConst(input.subslice(0, 1), context);
         var funcNameExpr = switch funcName {
-            case PReturnSome(s):
-                s;
-            default:
-                return PNotParsed;
+            case PReturnSome(s): s;
+            default: return PParseError;
         }
         input.consume(1);
 
         var block = MParseBlocker.createBlock(input, Some(TParentOpen), TParentClose);
         final max = block[block.length - 1];
-        MTokenViewTools.expect(block, TParentOpen);
-        MTokenViewTools.expectBack(block, TParentClose);
+        if(!MTokenViewTools.expect(block, TParentOpen, context)) {
+            return PParseError;
+        }
+        if(!MTokenViewTools.expectBack(block, TParentClose, context)) {
+            return PParseError;
+        }
 
-        var arguments = MTokenViewTools.splitDepthCounting(block, TComma);
+        final argumentsResult = MTokenViewTools.splitDepthCounting(block, TComma, context);
+        if (argumentsResult.isErr()) {
+            return PParseError;
+        }
+        final arguments = argumentsResult.unwrap();
 
-        var args = arguments.map(a -> {
+        var args = [];
+        for (a in arguments) {
             var parser = new MParser(a, context).intoMExpr();
             if (parser.isNone()) {
-                throw new Exception("Unexpected None");
+                return PParseError;
             }
-            parser.unwrap();
-        });
+            args.push(parser.unwrap());
+        }
 
         var call: MExpr = {
             kind: ECall(funcNameExpr, args),

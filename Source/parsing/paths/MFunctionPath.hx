@@ -10,8 +10,8 @@ import lexing.MTokenKind;
 import core.MConst.CIdent;
 import typing.MType;
 import parsing.paths.MBlockPath;
-import haxe.Exception;
 import core.MAccessLevel;
+import error.MErrorKind;
 
 using core.MTokenViewTools;
 
@@ -24,7 +24,9 @@ class MFunctionPath {
         func.access = accessLevel;
 
         // Is function
-        input.expect(TKeyword(KFunc));
+        if(!input.expect(TKeyword(KFunc), context)) {
+            return PParseError;
+        }
 
         // read name
         switch (input[readIndex].kind) {
@@ -32,14 +34,17 @@ class MFunctionPath {
                 func.name = n;
                 readIndex += 1;
             default:
-                throw new Exception("Function missing name");
+                context.emitError(MErrorKind.ParserExpectedFunctionName, input.intoArray());
+                return PParseError;
         }
 
         input.consume(readIndex);
 
         // arguments
         var argBlock = MParseBlocker.createBlock(input, Some(TParentOpen), TParentClose);
-        argBlock.consume(1); // Consume TParentOpen
+        if(!argBlock.expect(TParentOpen, context)) {
+            return PParseError;
+        }
 
         while (argBlock.length > 0) {
             if (argBlock[0].kind.match(TParentClose)) {
@@ -60,13 +65,12 @@ class MFunctionPath {
                     argBlock.consume(3);
 
                 default:
-                    throw new Exception('Expected typed parameter, found: ${argBlock.map(t -> '${t}')}');
+                    context.emitError(MErrorKind.ParserExpectedTypedParam, argBlock.intoArray());
+                    return PParseError;
             }
 
             if (!argBlock[0].kind.match(TComma)) {
-                if (!argBlock[0].kind.match(TParentClose)) {
-                    throw new Exception('Expected ), got ${argBlock[0].kind}');
-                }
+                argBlock.expect(TParentClose, context);
                 break;
             }
             argBlock.consume(1);

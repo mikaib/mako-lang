@@ -8,9 +8,10 @@ import core.MOptionKind;
 import core.MBinop;
 import core.MUnop;
 import haxe.Exception;
+import error.MErrorKind;
 
 class MOperatorPath {
-    private static function getPrecedance(op: MTokenOperator):Null<Int> {
+    private static function getPrecedance(op: MTokenOperator): Int {
         switch(op) {
             case OIncrement, ODecrement, ONot:
                 return 1;
@@ -25,7 +26,7 @@ class MOperatorPath {
             case ONotEaqual, OEqual, OGreatherThen, OGreaterThenEqualTo, OLessThen, OLessThenEqualTo, OAddAssign, OSubtractAssign, OMultiplyAssign, ODivideAssign, OOrAssign, OAndAssign, OXorAssign:
                 return 6;
             default:
-                throw new Exception('Unexpected operator: $op');
+                throw new Exception('Internal compiler error: Unexpected operator: $op');
         }
     }
 
@@ -68,13 +69,13 @@ class MOperatorPath {
         input.consume(index);
         var expr = new MParser(block, context).intoMExpr();
         if (expr.isNone()) {
-            return PNotParsed;
+            return PParseError;
         }
 
         return PReturnSome(expr.unwrap());
     }
 
-    private static function intoBinOp(op: MTokenOperator): Null<MBinop> {
+    private static function intoBinOp(op: MTokenOperator): MOption<MBinop> {
         final table = [
             MTokenOperator.OPlus => MBinop.Add,
             MTokenOperator.OMinus => MBinop.Sub,
@@ -97,26 +98,25 @@ class MOperatorPath {
 
         final result = table[op];
         if (result == null) {
-            throw new Exception('Unexpected bin operator: $op');
+            return None;
         }
-        return result;
+        return Some(result);
     }
 
-
-    private static function intoUnOp(op: MTokenOperator):Null<MUnop> {
+    private static function intoUnOp(op: MTokenOperator): MOption<MUnop> {
         if (op.match(MTokenOperator.OIncrement)) {
-            return MUnop.Inc;
+            return Some(Inc);
         }
         else if (op.match(MTokenOperator.ODecrement)) {
-            return MUnop.Dec;
+            return Some(Dec);
         }
         else if (op.match(MTokenOperator.ONot)) {
-            return MUnop.Neg;
+            return Some(Neg);
         }
         else if (op.match(MTokenOperator.OMinus)) {
-            return MUnop.Min;
+            return Some(Min);
         }
-        throw new Exception('Unexpected unop operator: $op');
+        return None;
     }
 
     public static function intoOperationAST(input: ArrayView<MToken>, leftAST: MOption<MExpr>, context: Context): ParserFlowControl {
@@ -132,19 +132,21 @@ class MOperatorPath {
         var firstToken = input[0];
         var firstTokenKind = firstToken?.kind;
         var firstOperator = switch (firstTokenKind) {
-            case (TTokenOperator(o)):
-                o;
-            default:
-                return PNotParsed;
+            case (TTokenOperator(o)): o;
+            default: return PParseError;
         }
         input.consume(1);
 
         if (firstToken.kind.match(TTokenOperator(MTokenOperator.OIncrement)) ||
             firstToken.kind.match(TTokenOperator(MTokenOperator.ODecrement))) {
             if (leftAST.hasValue()) {
-                var unop = MExprKind.EUnop(leftAST.unwrap(), intoUnOp(firstOperator), false);
+                var unop = intoUnOp(firstOperator);
+                if (unop.isNone()) {
+                    context.emitError(MErrorKind.ParserExpectedUnaryOperator, input.intoArray());
+                    return PParseError;
+                }
                 var expr: MExpr = {
-                    kind: unop,
+                    kind: MExprKind.EUnop(leftAST.unwrap(), unop.unwrap(), false),
                     pos: {
                         path: firstToken.pos.path,
                         min: firstToken.pos.min,
@@ -161,27 +163,26 @@ class MOperatorPath {
         var depth = 0;
         var readIndex = 0;
         while (input.length > readIndex) {
-            if (input[readIndex].kind.match(TParentOpen)) {
-                depth++;
-            }
-            else if (input[readIndex].kind.match(TParentClose)) {
-                depth--;
-            }
-
-            var op = switch (input[readIndex].kind) {
-                case TTokenOperator(op): op;
-                default: null;
+            var op: MOption<MTokenOperator> = switch (input[readIndex].kind) {
+                case TParentOpen: depth++; None;
+                case TParentClose: depth--; None;
+                case TTokenOperator(op): Some(op);
+                default: None;
             }
 
-            if (op != null && getPrecedance(op) >= getPrecedance(firstOperator) && depth == 0) {
+            if (op.hasValue() && getPrecedance(op.unwrap()) >= getPrecedance(firstOperator) && depth == 0) {
                 break;
             }
 
             readIndex++;
         }
 
+        if (depth != 0) {
+            context.emitError(MErrorKind.ParserMissingClosingParenthesis, input.intoArray());
+            return PParseError;
+        }
         if (readIndex == 0) {
-            return PNotParsed;
+            throw new Exception("Triggered parsing error in the operatorPath"); //TODO: Create
         }
 
         var right = input.subslice(0, readIndex);
@@ -189,14 +190,24 @@ class MOperatorPath {
         var lastToken = right[right.length - 1];
         var expr = new MParser(right, context).intoMExpr();
         if (expr.isNone()) {
-            return PNotParsed;
+            return PParseError;
         }
         var rExpr = expr.unwrap();
         var op = switch (leftAST) {
             case Some(lExpr):
-                MExprKind.EBinop(lExpr, rExpr, intoBinOp(firstOperator));
+                var binop = intoBinOp(firstOperator);
+                if (binop.isNone()) {
+                    context.emitError(MErrorKind.ParserExpectedBinaryOperator, input.intoArray());
+                    return PParseError;
+                }
+                MExprKind.EBinop(lExpr, rExpr, binop.unwrap());
             case None:
-                MExprKind.EUnop(rExpr, intoUnOp(firstOperator), true);
+                var unop = intoUnOp(firstOperator);
+                if (unop.isNone()) {
+                    context.emitError(MErrorKind.ParserExpectedUnaryOperator, input.intoArray());
+                    return PParseError;
+                }
+                MExprKind.EUnop(rExpr, unop.unwrap(), true);
         }
         var expr: MExpr = {
             kind: op,
@@ -213,12 +224,12 @@ class MOperatorPath {
         return PReturnSome(expr);
     }
 
-    // Is an operator EXPR if there is an operator Token in the stream in a depth of 0.
-    // So 1 + 1 is true
-    // if(1 + 1) is false
-    // But (1 + 1) is also false, will parse parenthesis first.
+    // IsOperator returns true when an input ArrayView contains operators at a depth of 0
+    // e.g.
+    // 1 + 1 is true
+    // (1 + 1) is false, paranthesis make it a depth of one
+    // (1 + 1) - 2 is also true, there are operators at a depth of 1 and 0.
     public static function IsOperator(input: ArrayView<MToken>): Bool {
-        trace(input.map(t -> '${t.kind}'));
         var index = 0;
         var parentDepth = 0;
         var blockDepth = 0;

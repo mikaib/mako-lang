@@ -6,6 +6,7 @@ import parsing.MParser.ParserFlowControl;
 import lexing.MTokenKind.TConst;
 import core.MConst;
 import typing.MType;
+import error.MErrorKind;
 
 class MConstPath {
     public static function IntoEConst(input: ArrayView<MToken>, context: Context): ParserFlowControl {
@@ -15,7 +16,8 @@ class MConstPath {
                 input.consume(1);
                 c;
             case _:
-                return PNotParsed;
+                context.emitError(MErrorKind.ParserExpectedConst, input.intoArray());
+                return PParseError;
         }
 
         var type = switch (const) {

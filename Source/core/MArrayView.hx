@@ -62,6 +62,10 @@ abstract ArrayView<T>(ArrayViewData<T>) from ArrayViewData<T> to ArrayViewData<T
         return view;
     }
 
+    public function intoArray(): Array<T> {
+        return this.data.slice(this.offset, this.offset + this.length);
+    }
+
     public function map<U>(f: T -> U): Array<U> {
         var result = new Array<U>();
         for (i in 0...this.length) {

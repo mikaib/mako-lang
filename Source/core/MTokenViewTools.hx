@@ -1,38 +1,46 @@
 package core;
 import core.MArrayView.ArrayView;
 import lexing.MTokenKind;
-import haxe.Exception;
 import lexing.MToken;
+import error.MErrorKind;
+import core.result.MResult;
+import core.result.MResultKind;
 
 using haxe.EnumTools.EnumValueTools;
 using core.MTokenViewTools;
 
 class MTokenViewTools {
-    public static function expect(view: ArrayView<MToken>, token: MTokenKind) {
+    public static function expect(view: ArrayView<MToken>, token: MTokenKind, context: Context): Bool {
         if (view.length < 1) {
-            throw new Exception('Expected ${token}, got empty array');
+            context.emitError(MErrorKind.ParserUnexpectedStreamEnd, view.intoArray());
+            return false;
         }
 
         if (!view[0].kind.equals(token)) {
-            throw new Exception('Expected ${token}, got ${view[0].kind}');
+            context.emitError(MErrorKind.ParserUnexpectedToken, view.intoArray());
+            return false;
         }
 
         view.consume(1);
+        return true;
     }
 
-    public static function expectBack(view: ArrayView<MToken>, token: MTokenKind) {
+    public static function expectBack(view: ArrayView<MToken>, token: MTokenKind, context: Context): Bool {
         if (view.length < 1) {
-            throw new Exception('Expected ${token}, got empty array');
+            context.emitError(MErrorKind.ParserUnexpectedStreamEnd, view.intoArray());
+            return false;
         }
 
         if (!view[view.length - 1].kind.equals(token)) {
-            throw new Exception('Expected ${token}, got ${view[view.length - 1].kind}');
+            context.emitError(MErrorKind.ParserUnexpectedToken, view.intoArray());
+            return false;
         }
 
         view.consumeBack(1);
+        return true;
     }
 
-    public static function splitDepthCounting(view: ArrayView<MToken>, splitter: MTokenKind): Array<ArrayView<MToken>> {
+    public static function splitDepthCounting(view: ArrayView<MToken>, splitter: MTokenKind, context: Context): MResult<Array<ArrayView<MToken>>, MErrorKind> {
         var arrays = new Array();
 
         var readIndex = 0;
@@ -45,7 +53,7 @@ class MTokenViewTools {
                 if (ParantDepth == 0 && BraceDepth == 0 && BracketDepth == 0) {
                     arrays.push(view.subslice(0, readIndex));
                     view.consume(readIndex);
-                    view.expect(splitter);
+                    view.expect(splitter, context);
                     readIndex = 0;
                     continue;
                 }
@@ -62,11 +70,21 @@ class MTokenViewTools {
             }
             readIndex++;
         }
+        if (ParantDepth > 0) {
+            context.emitError(MErrorKind.ParserMissingClosingParenthesis, view.intoArray());
+            return Err(MErrorKind.ParserMissingClosingParenthesis);
+        }
+        if (BraceDepth > 0) {
+            context.emitError(MErrorKind.ParserMissingClosingBrace, view.intoArray());
+        }
+        if (BracketDepth > 0) {
+            context.emitError(MErrorKind.ParserMissingClosingBracket, view.intoArray());
+        }
         // Push remaining view to the array
         if (view.length > 0) {
             arrays.push(view.subslice(0, view.length));
             view.consume(view.length);
         }
-        return arrays;
+        return Ok(arrays);
     }
 }

@@ -7,25 +7,29 @@ import parsing.MParser.ParserFlowControl;
 import lexing.MTokenKind;
 import core.MOptionKind;
 import typing.MType;
+import error.MErrorKind;
 
 using core.MTokenViewTools;
 
 class MLoopPath {
     private static function intoDoWhileLoop(input: ArrayView<MToken>, context: Context): ParserFlowControl {
         final min = input[0];
-        input.expect(TKeyword(KDo));
-        var expr = new MParser(input, context).parseNextExpr();
-        if (expr == None) {
-            throw new Exception("Expected expression, found void");
+        input.expect(TKeyword(KDo), context);
+        var expression = switch new MParser(input, context).parseNextExpr() {
+            case PReturnSome(e): e;
+            default:
+                context.emitError(MErrorKind.ParserDoWhileExpectedExpr, input.intoArray());
+                return PParseError;
         }
-        var expression = expr.unwrap();
 
-        input.expect(TKeyword(KWhile));
-        var cond = new MParser(input, context).parseNextExpr();
-        if (cond == None) {
-            throw new Exception("Expected expression, found void");
+        input.expect(TKeyword(KWhile), context);
+        var condition = switch new MParser(input, context).parseNextExpr() {
+            case PReturnSome(c): c;
+            default:
+                context.emitError(MErrorKind.ParserDoWhileExpectedCondition, input.intoArray());
+                return PParseError;
         }
-        var condition = cond.unwrap();
+
         return PReturnSome({
             kind: MExprKind.EWhile(condition, expression, true),
             pos: {
@@ -40,19 +44,16 @@ class MLoopPath {
 
     private static function intoWhileLoop(input: ArrayView<MToken>, context: Context): ParserFlowControl{
         final min = input[0];
-        input.expect(TKeyword(KWhile));
-        var cond = new MParser(input, context).parseNextExpr();
-        if (cond == None) {
-            throw new Exception("Expected expression, found void");
+        input.expect(TKeyword(KWhile), context);
+        var condition = switch new MParser(input, context).parseNextExpr() {
+            case PReturnSome(c): c;
+            default: return PParseError;
         }
-        var condition = cond.unwrap();
 
-
-        var expr = new MParser(input, context).parseNextExpr();
-        if (expr == None) {
-            throw new Exception("Expected expression, found void");
+        var expression = switch new MParser(input, context).parseNextExpr() {
+            case PReturnSome(e): e;
+            default: return PParseError;
         }
-        var expression = expr.unwrap();
 
         return PReturnSome({
             kind: MExprKind.EWhile(condition, expression, false),
@@ -67,23 +68,28 @@ class MLoopPath {
 
     private static function intoForLoop(input: ArrayView<MToken>, context: Context): ParserFlowControl {
         final min = input[0];
-        input.expect(TKeyword(KFor));
+        input.expect(TKeyword(KFor), context);
         var parentBlock = MParseBlocker.createBlock(input, Some(TParentOpen), TParentClose);
-        parentBlock.expect(TParentOpen);
-        parentBlock.expectBack(TParentClose);
-        final parts = new MParser(parentBlock, context).expectExprs(3, None);
-
-        var expr = new MParser(input, context).parseNextExpr();
-        if (expr == None) {
-            throw new Exception("Expected expression, found void");
+        parentBlock.expect(TParentOpen, context);
+        parentBlock.expectBack(TParentClose, context);
+        final partsOption = new MParser(parentBlock, context).expectExprs(3);
+        if (partsOption.isNone()) {
+            return PParseError;
         }
-        var expression = expr.unwrap();
+
+        var parts = partsOption.unwrap();
+
+        var exprFlowControl = new MParser(input, context).parseNextExpr();
+        var expr = switch exprFlowControl {
+            case PReturnSome(e): e;
+            default: return exprFlowControl;
+        }
         return PReturnSome({
-            kind: MExprKind.EFor(parts[0], parts[1], parts[2], expression),
+            kind: MExprKind.EFor(parts[0], parts[1], parts[2], expr),
             pos: {
                 path: min.pos.path,
                 min: min.pos.min,
-                max: expression.pos.max
+                max: expr.pos.max
             },
             type: MType.mono(),
         });
