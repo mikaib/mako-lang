@@ -56,7 +56,6 @@ class MCallPath {
             }
             parser.unwrap();
         });
-        
         var call: MExpr = {
             kind: ECall(funcNameExpr, args),
             pos: {
