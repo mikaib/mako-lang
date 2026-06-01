@@ -77,7 +77,6 @@ class Main {
                     78 - 0.2;
                 }
                 x().y().z().a();
-
                 var x = 0.0;
                 return 2 + x;
             }
