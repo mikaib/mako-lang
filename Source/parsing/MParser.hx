@@ -59,6 +59,18 @@ class MParser {
     }
 
     public function parseNextExpr(): ParserFlowControl {
+        switch parseNextPrimaryExpr() {
+            case PReturnSome(expr): {
+                switch tokens.peek().kind {
+                    case TTokenOperator(_): return MOperatorPath.intoOperationAST(tokens, expr, None, context, this);
+                    case _: return PReturnSome(expr);
+                }
+            }
+            case PParseError: return PParseError;
+        }
+    }
+
+    public function parseNextPrimaryExpr(): ParserFlowControl {
         var optionExpr: MOption<ParserFlowControl> = switch (tokens[0].kind) {
             case TKeyword(KIf):
                 Some(MIfPath.intoEIf(tokens, context, this));

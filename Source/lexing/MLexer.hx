@@ -204,12 +204,12 @@ class MLexer {
     }
 
     final table = [
-        "<=" => MTokenOperator.OLessThenEqualTo,
+        "<=" => MTokenOperator.OLessThanEqualTo,
         "<<" => MTokenOperator.OShiftLeft,
-        "<" => MTokenOperator.OLessThen,
-        ">=" => MTokenOperator.OGreaterThenEqualTo,
+        "<" => MTokenOperator.OLessThan,
+        ">=" => MTokenOperator.OGreaterThanEqualTo,
         ">>" => MTokenOperator.OShiftRight,
-        ">" => MTokenOperator.OGreatherThen,
+        ">" => MTokenOperator.OGreatherThan,
         "==" => MTokenOperator.OEqual,
         "=" => MTokenOperator.OAssign,
         "!=" => MTokenOperator.ONotEaqual,

@@ -60,10 +60,11 @@ class Main {
 //            }
 //        ";
 
+        /*
         var code = "
-            const x: i32 = 0;
-            var y: i64 = 1;
-            var z: i64;
+            const x: i32 = 0
+            var y: i64 = 1
+            var z: i64
 
             func mul(a: i32, b: i32) -> i64 {
                 if (1) {
@@ -95,7 +96,11 @@ class Main {
                 mulThree(mulThree(3));
             }
         ";
+         */
 
+        var code = "
+            4 + 8 * 9 - 0
+        ";
         var lexer = new MLexer(code, "main.hx");
         var tokens = lexer.lexTokens();
         trace(tokens.map(t -> '\n$t'));
