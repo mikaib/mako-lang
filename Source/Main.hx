@@ -61,25 +61,38 @@ class Main {
 //        ";
 
         var code = "
-            func main() -> i32 {
-                for(var x: i32 = 0; i < 5; x++) {
-                    x -= 1;
-                }
-                do {1 + 2} while (2 == 3.4)
-                while(1.1 == 1) {
-                    x += 1;
-                }
-                if (1 + 1 == 0) {
-                    2 + 3 * 5;
-                } else if (9 - 0) {
-                    1 - 4;
-                } else {
-                    78 - 0.2;
-                }
-                x().y().z().a();
+            const x: i32 = 0;
+            var y: i64 = 1;
+            var z: i64;
 
-                var x = 0.0;
-                return 2 + x;
+            func mul(a: i32, b: i32) -> i64 {
+                if (1) {
+
+                } else if (2) {
+
+                } else {
+
+                }
+            }
+
+            func mulThree(a: i32) {
+                while (1) {
+
+                }
+
+                do {
+
+                } while (1)
+
+                for(1; 2; 3) {
+
+                }
+                mul(a, 3);
+                (3)
+            }
+
+            func main() -> i32 {
+                mulThree(mulThree(3));
             }
         ";
 
@@ -90,12 +103,10 @@ class Main {
         var parser = new MParser(new ArrayView(tokens), {});
         var ast = parser.parseTree();
 
-        var typer = new MTypeSystem(ast, {});
-        typer.run();
-
         var dot = new MDotCreator();
         dot.fromAST(ast);
-
+        var typer = new MTypeSystem(ast, {});
+        typer.run();
 
         var generator = new MIRGenerator(ast);
         var ir = generator.run();
@@ -110,5 +121,4 @@ class Main {
 
         Sys.print(csrc);
     }
-
 }

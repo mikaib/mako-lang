@@ -1,5 +1,6 @@
 package parsing.paths;
 
+import core.MOption;
 import core.MArrayView.ArrayView;
 import lexing.MToken;
 import parsing.MParser.ParserFlowControl;
@@ -9,7 +10,7 @@ import typing.MType;
 import error.MErrorKind;
 
 class MConstPath {
-    public static function IntoEConst(input: ArrayView<MToken>, context: Context): ParserFlowControl {
+    public static function IntoEConst(input: ArrayView<MToken>, expected_type: MOption<MConst>, context: Context): ParserFlowControl {
         var min = input[0];
         var const= switch (input[0].kind) {
             case TConst(c):
@@ -28,13 +29,21 @@ class MConstPath {
             case _: MType.mono();
         }
 
+        if (expected_type.hasValue()) {
+            var expected = expected_type.unwrap();
+
+            if (Type.enumConstructor(expected) != Type.enumConstructor(const)) {
+                return PParseError;
+            }
+        }
+
         return PReturnSome( {
             kind: MExprKind.EConst(const),
             type: type,
             pos: {
                 path: min.pos.path,
                 min: min.pos.min,
-                max: min.pos.max,
+                max: input.previous().pos.max,
             }
         });
     }

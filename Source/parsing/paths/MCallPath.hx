@@ -11,74 +11,67 @@ import core.MTokenViewTools;
 import parsing.MExpr;
 import core.MConst;
 import error.MErrorKind;
+import core.MOption;
 using core.MTokenViewTools;
 
 class MCallPath {
-    public static function isFuncCall(input: ArrayView<MToken>): Bool {
-        if (input.length < 3) {
-            return false;
+    private static function parseFunctionCallArgs(input:ArrayView<MToken>, context:Context, parser:MParser): MOption<MExprList> {
+        var arguments = [];
+
+        while (!input.peek().kind.match(TParentClose)) {
+            switch parser.parseNextExpr() {
+                case PReturnSome(arg):
+                    arguments.push(arg);
+                case _:
+                    return None;
+            }
+
+            if (!input.peek().kind.match(TComma)) {
+                break;
+            }
+            input.consume(1);
         }
-        if (!input[0].kind.match(TConst(CIdent(_)))) {
-            return false;
-        }
-        if (!input[1].kind.match(TParentOpen)) {
-            return false;
-        }
-        if (!input[input.length - 1].kind.match(TParentClose)) {
-            return false;
-        }
-        return true;
+        return Some(arguments);
     }
 
-    public static function parseFuncCall(input: ArrayView<MToken>, context: Context): ParserFlowControl{
+    public static function parseFuncCall(input: ArrayView<MToken>, context: Context, parser: MParser): ParserFlowControl {
         if (input.length == 0) {
             context.emitError(MErrorKind.ParserExpectedFunctionName, input.intoArray());
             return PParseError;
         }
-        final min = input[0];
+        final firstToken = input[0];
 
-        var funcName = MConstPath.IntoEConst(input.subslice(0, 1), context);
-        var funcNameExpr = switch funcName {
+        var funcNameExpr = switch MConstPath.IntoEConst(input, Some(MConst.CIdent("")), context) {
             case PReturnSome(s): s;
-            default: return PParseError;
-        }
-        input.consume(1);
-
-        var block = MParseBlocker.createBlock(input, Some(TParentOpen), TParentClose);
-        final max = block[block.length - 1];
-        if(!MTokenViewTools.expect(block, TParentOpen, context)) {
-            return PParseError;
-        }
-        if(!MTokenViewTools.expectBack(block, TParentClose, context)) {
-            return PParseError;
-        }
-
-        final argumentsResult = MTokenViewTools.splitDepthCounting(block, TComma, context);
-        if (argumentsResult.isErr()) {
-            return PParseError;
-        }
-        final arguments = argumentsResult.unwrap();
-
-        var args = [];
-        for (a in arguments) {
-            var parser = new MParser(a, context).intoMExpr();
-            if (parser.isNone()) {
+            default:
+                context.emitError(MErrorKind.ParserExpectedFunctionName, input.intoArray());
                 return PParseError;
-            }
-            args.push(parser.unwrap());
+        }
+
+        if(!input.expect(TParentOpen, context)) {
+            return PParseError;
+        }
+
+        final args = parseFunctionCallArgs(input, context, parser);
+        if (args.isNone()) {
+            return PParseError;
+        }
+
+        if(!input.expect(TParentClose, context)) {
+            return PParseError;
         }
 
         var call: MExpr = {
-            kind: ECall(funcNameExpr, args),
+            kind: ECall(funcNameExpr, args.unwrap()),
             pos: {
-                path: min.pos.path,
-                min: min.pos.min,
-                max: max.pos.max,
+                path: firstToken.pos.path,
+                min: firstToken.pos.min,
+                max: input.previous().pos.max,
             },
         };
 
         if (input.length > 0 && input[0].kind.equals(TDot)) {
-            return MObjectAccessPath.intoObjectAccess(call, input, context);
+            return MObjectAccessPath.intoObjectAccess(call, input, context, parser);
         }
         return PReturnSome(call);
     }

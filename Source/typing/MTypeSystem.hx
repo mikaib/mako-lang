@@ -136,9 +136,9 @@ class MTypeSystem {
 
                 for (d in decls) {
                     scope.defineVariable(d);
-                    if (d.expr != null) {
-                        makeConstraints(d.expr, scope);
-                        unify(d.type, d.expr.type);
+                    if (d.expr.hasValue()) {
+                        makeConstraints(d.expr.unwrap(), scope);
+                        unify(d.type, d.expr.unwrap().type);
                     }
                 }
 
@@ -178,8 +178,8 @@ class MTypeSystem {
             case EVars(decls):
                 for (d in decls) {
                     d.type = subst.apply(d.type);
-                    if (d.expr != null && needsCast(d.expr.type, d.type)) {
-                        d.expr = wrapCast(d.expr, d.type);
+                    if (d.expr.hasValue() && needsCast(d.expr.unwrap().type, d.type)) {
+                        d.expr = Some(wrapCast(d.expr.unwrap(), d.type));
                     }
                 }
 

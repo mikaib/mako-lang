@@ -30,51 +30,6 @@ class MOperatorPath {
         }
     }
 
-    private static function makeExpressionBlock(input: ArrayView<MToken>, context: Context): ParserFlowControl {
-        var index = 0;
-        var run = true;
-        var parentDepth = 0;
-        var blockDepth = 0;
-        while (input.length > index && run) {
-            switch (input[index].kind) {
-                case MTokenKind.TTokenOperator(_):
-                    if (parentDepth == 0 && blockDepth == 0) {
-                        run = false;
-                    }
-                    else {
-                        index++;
-                    }
-                case TBraceClose:
-                    blockDepth -= 1;
-                    index++;
-                case TBraceOpen:
-                    blockDepth += 1;
-                    index++;
-                case TParentOpen:
-                    parentDepth += 1;
-                    index++;
-                case TParentClose:
-                    parentDepth -= 1;
-                    index++;
-                default:
-                    index++;
-            }
-
-            if (!run) {
-                break;
-            }
-        }
-
-        var block = input.subslice(0, index);
-        input.consume(index);
-        var expr = new MParser(block, context).intoMExpr();
-        if (expr.isNone()) {
-            return PParseError;
-        }
-
-        return PReturnSome(expr.unwrap());
-    }
-
     private static function intoBinOp(op: MTokenOperator): MOption<MBinop> {
         final table = [
             MTokenOperator.OPlus => MBinop.Add,
@@ -119,26 +74,33 @@ class MOperatorPath {
         return None;
     }
 
-    public static function intoOperationAST(input: ArrayView<MToken>, leftAST: MOption<MExpr>, context: Context): ParserFlowControl {
-        if (leftAST == None) {
-            var expr = makeExpressionBlock(input, context);
-            switch(expr) {
+    public static function intoOperationAST(input: ArrayView<MToken>, leftAST: MOption<MExpr>, lastOperator: MOption<MTokenOperator>, context: Context, parser: MParser): ParserFlowControl {
+        var firstToken = input.peek();
+        if (leftAST.isNone() && !Std.isOfType(firstToken, TTokenOperator)) {
+            return PParseError;
+        }
+        return PParseError;
+    }
+
+    /*
+    public static function intoOperationASTOLD(input: ArrayView<MToken>, leftAST: MOption<MExpr>, context: Context, parser: MParser): ParserFlowControl {
+        var firstToken = input[0];
+        if (leftAST == None && !Std.isOfType(input.peek(), TTokenOperator)) {
+            var expr = parser.parseNextExpr();
+            switch (expr) {
                 case PReturnSome(ast):
                     leftAST = Some(ast);
-                default:
-                    leftAST;
+                case _:
             }
         }
-        var firstToken = input[0];
-        var firstTokenKind = firstToken?.kind;
-        var firstOperator = switch (firstTokenKind) {
-            case (TTokenOperator(o)): o;
+
+        var firstOperator = switch (input.next()) {
+            case TTokenOperator(o): o;
             default: return PParseError;
         }
-        input.consume(1);
 
-        if (firstToken.kind.match(TTokenOperator(MTokenOperator.OIncrement)) ||
-            firstToken.kind.match(TTokenOperator(MTokenOperator.ODecrement))) {
+        if (firstOperator.match(TTokenOperator(MTokenOperator.OIncrement)) ||
+            firstOperator.match(TTokenOperator(MTokenOperator.ODecrement))) {
             if (leftAST.hasValue()) {
                 var unop = intoUnOp(firstOperator);
                 if (unop.isNone()) {
@@ -153,10 +115,11 @@ class MOperatorPath {
                         max: firstToken.pos.max,
                     }
                 };
-                if (input.length > 0) {
-                    return intoOperationAST(input, Some(expr), context);
+                if (input[0].kind.match(TSemiColon) || input[0].kind.match(TParentClose)) {
+                    return PReturnSome(expr);
                 }
-                return PReturnSome(expr);
+
+                return intoOperationAST(input, Some(expr), context, parser);
             }
         }
 
@@ -177,18 +140,12 @@ class MOperatorPath {
             readIndex++;
         }
 
-        if (depth != 0) {
-            context.emitError(MErrorKind.ParserMissingClosingParenthesis, input.intoArray());
-            return PParseError;
-        }
-        if (readIndex == 0) {
-            throw new Exception("Triggered parsing error in the operatorPath"); //TODO: Create
-        }
-
         var right = input.subslice(0, readIndex);
         input.consume(readIndex);
         var lastToken = right[right.length - 1];
-        var expr = new MParser(right, context).intoMExpr();
+        parser.push_stack(right);
+        var expr = parser.intoMExpr(); // new MParser(right, context).intoMExpr();
+        parser.pop_stack();
         if (expr.isNone()) {
             return PParseError;
         }
@@ -219,45 +176,9 @@ class MOperatorPath {
         };
 
         if (input.length > 0) {
-            return intoOperationAST(input, Some(expr), context);
+            return intoOperationAST(input, Some(expr), context, parser);
         }
         return PReturnSome(expr);
     }
-
-    // IsOperator returns true when an input ArrayView contains operators at a depth of 0
-    // e.g.
-    // 1 + 1 is true
-    // (1 + 1) is false, paranthesis make it a depth of one
-    // (1 + 1) - 2 is also true, there are operators at a depth of 1 and 0.
-    public static function IsOperator(input: ArrayView<MToken>): Bool {
-        var index = 0;
-        var parentDepth = 0;
-        var blockDepth = 0;
-        while (input.length > index) {
-            switch (input[index].kind) {
-                case MTokenKind.TTokenOperator(_):
-                    if (parentDepth == 0 && blockDepth == 0) {
-                        return true;
-                    }
-                    else {
-                        index++;
-                    }
-                case TBraceClose:
-                    blockDepth -= 1;
-                    index++;
-                case TBraceOpen:
-                    blockDepth += 1;
-                    index++;
-                case TParentOpen:
-                    parentDepth += 1;
-                    index++;
-                case TParentClose:
-                    parentDepth -= 1;
-                    index++;
-                default:
-                    index++;
-            }
-        }
-        return false;
-    }
+     */
 }

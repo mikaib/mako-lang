@@ -8,14 +8,15 @@ import lexing.MTokenKind;
 import core.MOptionKind;
 import typing.MType;
 import error.MErrorKind;
+import core.MOption;
 
 using core.MTokenViewTools;
 
 class MLoopPath {
-    private static function intoDoWhileLoop(input: ArrayView<MToken>, context: Context): ParserFlowControl {
+    private static function intoDoWhileLoop(input: ArrayView<MToken>, context: Context, parser: MParser): ParserFlowControl {
         final min = input[0];
         input.expect(TKeyword(KDo), context);
-        var expression = switch new MParser(input, context).parseNextExpr() {
+        var expression = switch parser.parseNextExpr() {
             case PReturnSome(e): e;
             default:
                 context.emitError(MErrorKind.ParserDoWhileExpectedExpr, input.intoArray());
@@ -23,7 +24,7 @@ class MLoopPath {
         }
 
         input.expect(TKeyword(KWhile), context);
-        var condition = switch new MParser(input, context).parseNextExpr() {
+        var condition = switch parser.parseNextExpr() {
             case PReturnSome(c): c;
             default:
                 context.emitError(MErrorKind.ParserDoWhileExpectedCondition, input.intoArray());
@@ -35,22 +36,22 @@ class MLoopPath {
             pos: {
                 path: min.pos.path,
                 min: min.pos.min,
-                max: condition.pos.max,
+                max: input.previous().pos.max,
 
             },
             type: MType.mono(),
         });
     }
 
-    private static function intoWhileLoop(input: ArrayView<MToken>, context: Context): ParserFlowControl{
+    private static function intoWhileLoop(input: ArrayView<MToken>, context: Context, parser: MParser): ParserFlowControl{
         final min = input[0];
         input.expect(TKeyword(KWhile), context);
-        var condition = switch new MParser(input, context).parseNextExpr() {
+        var condition = switch parser.parseNextExpr() {
             case PReturnSome(c): c;
             default: return PParseError;
         }
 
-        var expression = switch new MParser(input, context).parseNextExpr() {
+        var expression = switch parser.parseNextExpr() {
             case PReturnSome(e): e;
             default: return PParseError;
         }
@@ -60,26 +61,53 @@ class MLoopPath {
             pos: {
                 path: min.pos.path,
                 min: min.pos.min,
-                max: expression.pos.max
+                max: input.previous().pos.max
             },
             type: MType.mono(),
         });
     }
 
-    private static function intoForLoop(input: ArrayView<MToken>, context: Context): ParserFlowControl {
+    private static function parseForExpressions(input: ArrayView<MToken>, context: Context, parser: MParser): MOption<MExprList> {
+        var exprArr = [];
+
+        switch parser.parseNextExpr() {
+            case PReturnSome(e): exprArr.push(e);
+            default: return None;
+        }
+        if(!input.expect(TSemiColon, context)) {
+            return None;
+        }
+
+        switch parser.parseNextExpr() {
+            case PReturnSome(e): exprArr.push(e);
+            default: return None;
+        }
+        if(!input.expect(TSemiColon, context)) {
+            return None;
+        }
+
+        switch parser.parseNextExpr() {
+            case PReturnSome(e): exprArr.push(e);
+            default: return None;
+        }
+
+        return Some(exprArr);
+    }
+
+    private static function intoForLoop(input: ArrayView<MToken>, context: Context, parser: MParser): ParserFlowControl {
         final min = input[0];
         input.expect(TKeyword(KFor), context);
-        var parentBlock = MParseBlocker.createBlock(input, Some(TParentOpen), TParentClose);
-        parentBlock.expect(TParentOpen, context);
-        parentBlock.expectBack(TParentClose, context);
-        final partsOption = new MParser(parentBlock, context).expectExprs(3);
+        input.expect(TParentOpen, context);
+        final partsOption = parseForExpressions(input, context, parser);
+        trace(input.peek());
+        input.expect(TParentClose, context);
         if (partsOption.isNone()) {
             return PParseError;
         }
 
         var parts = partsOption.unwrap();
 
-        var exprFlowControl = new MParser(input, context).parseNextExpr();
+        var exprFlowControl = parser.parseNextExpr();
         var expr = switch exprFlowControl {
             case PReturnSome(e): e;
             default: return exprFlowControl;
@@ -89,24 +117,24 @@ class MLoopPath {
             pos: {
                 path: min.pos.path,
                 min: min.pos.min,
-                max: expr.pos.max
+                max: input.previous().pos.max
             },
             type: MType.mono(),
         });
     }
 
-    public static function intoLoop(input: ArrayView<MToken>, context: Context): ParserFlowControl {
+    public static function intoLoop(input: ArrayView<MToken>, context: Context, parser: MParser): ParserFlowControl {
         if (input.length == 0) {
             throw new Exception("Internal compiler error: Input length was 0");
         }
 
         return switch(input[0].kind) {
             case TKeyword(KDo):
-                intoDoWhileLoop(input, context);
+                intoDoWhileLoop(input, context, parser);
             case TKeyword(KWhile):
-                intoWhileLoop(input, context);
+                intoWhileLoop(input, context, parser);
             case TKeyword(KFor):
-                intoForLoop(input, context);
+                intoForLoop(input, context, parser);
             default:
                 throw new Exception('Expected loop, got ${input[0].kind}');
         }

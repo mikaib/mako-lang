@@ -13,8 +13,8 @@ using core.MTokenViewTools;
 
 class MIfPath {
 
-    private static function parseElse(input: ArrayView<MToken>, currentIf: MExpr, context: Context): ParserFlowControl {
-        if (input.length == 0 || !input[0].kind.match(TKeyword(KElse))) {
+    private static function parseElse(input: ArrayView<MToken>, currentIf: MExpr, context: Context, parser: MParser): ParserFlowControl {
+        if (input.length == 0 || !input.peek().kind.match(TKeyword(KElse))) {
             switch (currentIf.kind) {
                 case EIf(cond, eif, _): currentIf.kind = EIf(cond, eif, None);
                 default: throw new Exception("Internal compiler error, reached unreachable path");
@@ -25,10 +25,13 @@ class MIfPath {
         input.expect(TKeyword(KElse), context);
 
         var eElse: MExpr;
-        if (input[0].kind.match(TKeyword(KIf))) {
-            return intoEIf(input, context);
+        if (input.peek().kind.match(TKeyword(KIf))) {
+            eElse = switch intoEIf(input, context, parser) {
+                case PReturnSome(mIf): mIf;
+                default: return PParseError;
+            }
         } else {
-            eElse = switch new MParser(input, context).parseNextExpr() {
+            eElse = switch parser.parseNextExpr() {
                 case PReturnSome(e): e;
                 default: return PParseError;
             }
@@ -43,23 +46,25 @@ class MIfPath {
         return PReturnSome(currentIf);
     }
 
-    public static function intoEIf(input: ArrayView<MToken>, context: Context): ParserFlowControl {
-        if (input.length == 0 || !input[0].kind.match(TKeyword(KIf))) {
+    public static function intoEIf(input: ArrayView<MToken>, context: Context, parser: MParser): ParserFlowControl {
+        if (input.length == 0) {
             throw new Exception("Internal compiler error, reached unreachable codo");
         }
 
-        var path = input[0].pos.path;
-        var minPos = input[0].pos.min;
-        input.consume(1);
+        var min = input[0];
 
-        var condition = switch new MParser(input, context).parseNextExpr() {
+        if (!input.expect(TKeyword(KIf), context)) {
+            return PParseError;
+        }
+
+        var condition = switch parser.parseNextExpr() {
             case PReturnSome(e): e;
             default:
                 context.emitError(MErrorKind.ParserExpectedIfCondition, input.intoArray());
                 return PParseError;
         }
 
-        var expression = switch new MParser(input, context).parseNextExpr() {
+        var expression = switch parser.parseNextExpr() {
             case PReturnSome(e): e;
             default:
                 context.emitError(MErrorKind.ParserExpectedIfExpression, input.intoArray());
@@ -69,12 +74,12 @@ class MIfPath {
         var ifExpr: MExpr = {
             kind: EIf(condition, expression, None),
             pos: {
-                path: path,
-                min: minPos,
-                max: expression.pos.max,
+                path: min.pos.path,
+                min: min.pos.min,
+                max: input.previous().pos.max,
             },
         };
 
-        return parseElse(input, ifExpr, context);
+        return parseElse(input, ifExpr, context, parser);
     }
 }

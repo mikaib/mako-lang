@@ -10,81 +10,18 @@ using haxe.EnumTools.EnumValueTools;
 using core.MTokenViewTools;
 
 class MTokenViewTools {
-    public static function expect(view: ArrayView<MToken>, token: MTokenKind, context: Context): Bool {
-        if (view.length < 1) {
-            context.emitError(MErrorKind.ParserUnexpectedStreamEnd, view.intoArray());
+    public static function expect(input: ArrayView<MToken>, token: MTokenKind, context: Context): Bool {
+        if (input.peek() == null) {
+            context.emitError(MErrorKind.ParserUnexpectedStreamEnd, input.intoArray());
             return false;
         }
 
-        if (!view[0].kind.equals(token)) {
-            context.emitError(MErrorKind.ParserUnexpectedToken, view.intoArray());
+        if (!input[0].kind.equals(token)) {
+            context.emitError(MErrorKind.ParserUnexpectedToken, input.intoArray());
             return false;
         }
 
-        view.consume(1);
+        input.consume(1);
         return true;
-    }
-
-    public static function expectBack(view: ArrayView<MToken>, token: MTokenKind, context: Context): Bool {
-        if (view.length < 1) {
-            context.emitError(MErrorKind.ParserUnexpectedStreamEnd, view.intoArray());
-            return false;
-        }
-
-        if (!view[view.length - 1].kind.equals(token)) {
-            context.emitError(MErrorKind.ParserUnexpectedToken, view.intoArray());
-            return false;
-        }
-
-        view.consumeBack(1);
-        return true;
-    }
-
-    public static function splitDepthCounting(view: ArrayView<MToken>, splitter: MTokenKind, context: Context): MResult<Array<ArrayView<MToken>>, MErrorKind> {
-        var arrays = new Array();
-
-        var readIndex = 0;
-
-        var ParantDepth = 0;
-        var BraceDepth = 0;
-        var BracketDepth = 0;
-        while (view.length > readIndex) {
-            if (view[readIndex].kind == splitter) {
-                if (ParantDepth == 0 && BraceDepth == 0 && BracketDepth == 0) {
-                    arrays.push(view.subslice(0, readIndex));
-                    view.consume(readIndex);
-                    view.expect(splitter, context);
-                    readIndex = 0;
-                    continue;
-                }
-            } else {
-                switch (view[readIndex].kind) {
-                    case TParentOpen: ParantDepth++;
-                    case TParentClose: ParantDepth--;
-                    case TBraceOpen: BraceDepth++;
-                    case TBraceClose: BraceDepth--;
-                    case TBracketOpen: BracketDepth++;
-                    case TBracketClose: BracketDepth--;
-                    default:
-                }
-            }
-            readIndex++;
-        }
-        if (ParantDepth > 0) {
-            context.emitError(MErrorKind.ParserMissingClosingParenthesis, view.intoArray());
-            return Err(MErrorKind.ParserMissingClosingParenthesis);
-        }
-        if (BraceDepth > 0) {
-            context.emitError(MErrorKind.ParserMissingClosingBrace, view.intoArray());
-        }
-        if (BracketDepth > 0) {
-            context.emitError(MErrorKind.ParserMissingClosingBracket, view.intoArray());
-        }
-        // Push remaining view to the array
-        if (view.length > 0) {
-            arrays.push(view.subslice(0, view.length));
-            view.consume(view.length);
-        }
-        return Ok(arrays);
     }
 }

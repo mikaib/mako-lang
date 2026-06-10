@@ -8,9 +8,9 @@ import core.MArrayView.ArrayView;
 using core.MTokenViewTools;
 
 class MObjectAccessPath {
-    public static function intoObjectAccess(left: MExpr, input: ArrayView<MToken>, context: Context): ParserFlowControl {
+    public static function intoObjectAccess(left: MExpr, input: ArrayView<MToken>, context: Context, parser: MParser): ParserFlowControl {
         input.expect(TDot, context);
-        var rightControl = new MParser(input, context).parseNextExpr();
+        var rightControl = parser.parseNextExpr();
         var right = switch rightControl {
             case PReturnSome(r): r;
             default: return rightControl;
@@ -20,7 +20,7 @@ class MObjectAccessPath {
             pos: {
                 path: left.pos.path,
                 min: left.pos.min,
-                max: right.pos.max,
+                max: input.previous().pos.max,
             },
             type: MType.mono(),
         });
