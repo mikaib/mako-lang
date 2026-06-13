@@ -81,7 +81,7 @@ class Main {
                 }
 
                 do {
-                    const x: i32 = -4 + ++8 * 9 - 0++
+                    const x: i32 = -4 + ++8 * (9 - 0++) / 5
                 } while (1)
 
                 for(1; 2; 3) {
