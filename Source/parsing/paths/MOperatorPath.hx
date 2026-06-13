@@ -8,6 +8,7 @@ import core.MOptionKind;
 import core.MBinop;
 import core.MUnop;
 import haxe.Exception;
+import error.MErrorKind;
 
 class MOperatorPath {
     public static function getPrecedence(op: MBinop): Int {
@@ -63,6 +64,19 @@ class MOperatorPath {
         return Some(result);
     }
 
+    public static function isPostfixUnop(token: MTokenKind): Bool {
+        switch token {
+            case TTokenOperator(op): {
+                if (op.match(OIncrement) ||
+                    op.match(ODecrement)) {
+                    return true;
+                }
+                return false;
+            }
+            case _: return false;
+        }
+    }
+
     private static function intoUnOp(op: MTokenOperator): MOption<MUnop> {
         if (op.match(MTokenOperator.OIncrement)) {
             return Some(Inc);
@@ -79,8 +93,49 @@ class MOperatorPath {
         return None;
     }
 
+    public static function intoUnOpExpr(input: ArrayView<MToken>, expr: MOption<MExpr>, context: Context, parser: MParser): ParserFlowControl {
+        if (input.peek() == null) {
+            context.emitError(MErrorKind.ParserUnexpectedStreamEnd, input.intoArray());
+            return PParseError;
+        }
+        var firstToken = input.next();
+        var unop: MOption<MUnop> = switch firstToken.kind {
+            case TTokenOperator(op): intoUnOp(op);
+            case _: {
+                context.emitError(MErrorKind.ParserExpectedUnaryOperator, input.intoArray());
+                return PParseError;
+            }
+        }
+
+        if (unop.isNone()) {
+            context.emitError(MErrorKind.ParserExpectedUnaryOperator, input.intoArray());
+        }
+
+        var prefix = expr.isNone();
+
+        if (expr.isNone()) {
+            var exprControl = parser.parseNextPrimaryExpr();
+
+            expr = Some(switch exprControl {
+                case PReturnSome(expr): expr;
+                case PParseError: return PParseError;
+            });
+        }
+
+        return PReturnSome(
+            {
+                kind: MExprKind.EUnop(expr.unwrap(), unop.unwrap(), prefix),
+                pos: {
+                    path: firstToken.pos.path,
+                    min: firstToken.pos.min,
+                    max: input.previous().pos.max,
+                }
+            }
+        );
+    }
+
     // operator precedence parser
-    public static function intoOperationAST(input: ArrayView<MToken>, leftExpr: MExpr, leftOperation: MOption<MBinop>, context: Context, parser: MParser): ParserFlowControl {
+    public static function intoBinOpExpr(input: ArrayView<MToken>, leftExpr: MExpr, leftOperation: MOption<MBinop>, context: Context, parser: MParser): ParserFlowControl {
         while(true) {
             if (input.peek() == null) {
                 return PReturnSome(leftExpr);
@@ -93,7 +148,8 @@ class MOperatorPath {
 
             final binOp = intoBinOp(firstOperator);
             if (binOp.isNone()) {
-                throw new Exception("Unhandles None value");
+                trace(firstOperator);
+                throw new Exception("Unhandled None value");
             }
 
             if (leftOperation.hasValue()) {
@@ -112,7 +168,7 @@ class MOperatorPath {
                 case PParseError: return PParseError;
             }
 
-            rightExprFlow = intoOperationAST(input, rightExpr, binOp, context, parser);
+            rightExprFlow = intoBinOpExpr(input, rightExpr, binOp, context, parser);
             rightExpr = switch rightExprFlow {
                 case PReturnSome(expr): expr;
                 case PParseError: return PParseError;

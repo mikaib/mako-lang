@@ -60,7 +60,6 @@ class Main {
 //            }
 //        ";
 
-        /*
         var code = "
             const x: i32 = 0
             var y: i64 = 1
@@ -82,7 +81,7 @@ class Main {
                 }
 
                 do {
-
+                    const x: i32 = -4 + ++8 * 9 - 0++
                 } while (1)
 
                 for(1; 2; 3) {
@@ -96,11 +95,7 @@ class Main {
                 mulThree(mulThree(3));
             }
         ";
-         */
 
-        var code = "
-            4 + 8 * 9 - 0
-        ";
         var lexer = new MLexer(code, "main.hx");
         var tokens = lexer.lexTokens();
         trace(tokens.map(t -> '\n$t'));

@@ -61,8 +61,12 @@ class MParser {
     public function parseNextExpr(): ParserFlowControl {
         switch parseNextPrimaryExpr() {
             case PReturnSome(expr): {
+                if (tokens.peek() == null) {
+                    return PReturnSome(expr);
+                }
+
                 switch tokens.peek().kind {
-                    case TTokenOperator(_): return MOperatorPath.intoOperationAST(tokens, expr, None, context, this);
+                    case TTokenOperator(_): return MOperatorPath.intoBinOpExpr(tokens, expr, None, context, this);
                     case _: return PReturnSome(expr);
                 }
             }
@@ -71,6 +75,37 @@ class MParser {
     }
 
     public function parseNextPrimaryExpr(): ParserFlowControl {
+        // operators should already be handles by intoBinOpExpr in parseNextExpr or are invalid at this point.
+        // e.g. * y should start with an expression, not an operator
+        // ++x is valid, and should be parsed by an unop
+        trace(tokens.peek());
+
+        if (tokens.peek().kind.match(TTokenOperator(_))) {
+            return MOperatorPath.intoUnOpExpr(tokens, None, context, this);
+        }
+
+        trace(tokens.peek());
+
+        var expr = switch parseNextPrimaryExprInternal() {
+            case PReturnSome(e): e;
+            case PParseError: return PParseError;
+        }
+
+        var nextToken = tokens.peek();
+        if (nextToken == null) {
+            return PReturnSome(expr);
+        }
+
+        trace(nextToken.kind);
+
+        if (MOperatorPath.isPostfixUnop(nextToken.kind)) {
+            return MOperatorPath.intoUnOpExpr(tokens, Some(expr), context, this);
+        }
+
+        return PReturnSome(expr);
+    }
+
+    private function parseNextPrimaryExprInternal(): ParserFlowControl {
         var optionExpr: MOption<ParserFlowControl> = switch (tokens[0].kind) {
             case TKeyword(KIf):
                 Some(MIfPath.intoEIf(tokens, context, this));
