@@ -67,6 +67,9 @@ class Main {
             func main() {
                 mul(1, 2)
                 loop()
+                w().x().y().z()
+                var x = 0.0
+                return 2 + x
             }
         ";
 

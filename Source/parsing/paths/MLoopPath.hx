@@ -99,7 +99,6 @@ class MLoopPath {
         input.expect(TKeyword(KFor), context);
         input.expect(TParentOpen, context);
         final partsOption = parseForExpressions(input, context, parser);
-        trace(input.peek());
         input.expect(TParentClose, context);
         if (partsOption.isNone()) {
             return PParseError;

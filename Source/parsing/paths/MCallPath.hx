@@ -70,9 +70,6 @@ class MCallPath {
             },
         };
 
-        if (input.length > 0 && input[0].kind.equals(TDot)) {
-            return MObjectAccessPath.intoObjectAccess(call, input, context, parser);
-        }
         return PReturnSome(call);
     }
 }

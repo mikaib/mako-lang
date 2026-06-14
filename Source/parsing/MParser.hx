@@ -19,6 +19,9 @@ import core.MAccessLevel;
 import error.MErrorKind;
 import core.MConst;
 import haxe.macro.Expr.Constant;
+import parsing.paths.MObjectAccessPath;
+import parsing.paths.MObjectAccessPath.MObjectAccessPath.intoObjectAccess;
+using haxe.EnumTools.EnumValueTools;
 
 enum ParserFlowControl {
     PReturnSome(expr: MExpr);
@@ -67,6 +70,7 @@ class MParser {
 
                 switch tokens.peek().kind {
                     case TTokenOperator(_): return MOperatorPath.intoBinOpExpr(tokens, expr, None, context, this);
+                    case TDot: return MObjectAccessPath.intoObjectAccess(expr, tokens, context, this);
                     case _: return PReturnSome(expr);
                 }
             }
