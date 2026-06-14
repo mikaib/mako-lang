@@ -78,13 +78,10 @@ class MParser {
         // operators should already be handles by intoBinOpExpr in parseNextExpr or are invalid at this point.
         // e.g. * y should start with an expression, not an operator
         // ++x is valid, and should be parsed by an unop
-        trace(tokens.peek());
-
         if (tokens.peek().kind.match(TTokenOperator(_))) {
             return MOperatorPath.intoUnOpExpr(tokens, None, context, this);
         }
 
-        trace(tokens.peek());
 
         var expr = switch parseNextPrimaryExprInternal() {
             case PReturnSome(e): e;
@@ -95,8 +92,6 @@ class MParser {
         if (nextToken == null) {
             return PReturnSome(expr);
         }
-
-        trace(nextToken.kind);
 
         if (MOperatorPath.isPostfixUnop(nextToken.kind)) {
             return MOperatorPath.intoUnOpExpr(tokens, Some(expr), context, this);

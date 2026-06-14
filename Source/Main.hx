@@ -15,67 +15,42 @@ import parsing.dotter.MDotCreator;
 class Main {
 
     public static function main() {
-//        var code = "
-//            var str = \"Hello there!\\t\\\'whose there\\\'\";
-//            var int = 4;
-//            var float = 3.14;
-//            var bool = true;
-//            protected const a: i64 = 0;
-//            var c = 12.3;
-//            var d = !c;
-//
-//            {
-//                2 + 2 * 9;
-//            }
-//
-//            var e = 3 * ++c + 9++;
-//            var f = 7 * (1 + 1) / 4;
-//
-//            var g = if(1 == 1) {
-//                3
-//            } else {
-//                4
-//            };
-//
-//            var h = if(2 * f < g + 1) {
-//                3
-//            } else if (4 >= 9) {
-//                5 + 4
-//            } else {
-//                4
-//            };
-//
-//            func mul(a: i32, b: i32) -> i64 {
-//                var h = 1;
-//                return 4 + 5;
-//            }
-//
-//            func loop() {
-//
-//            }
-//
-//            func main() {
-//                mul(1, 2);
-//                loop();
-//            }
-//        ";
-
         var code = "
-            const x: i32 = 0
-            var y: i64 = 1
-            var z: i64
+            var str = \"Hello there!\\t\\\'whose there\\\'\"
+            var int = 4
+            var float = 3.14
+            var bool = true
+            protected const a: i64 = 0
+            var c = 12.3
+            var d = !c
 
-            func mul(a: i32, b: i32) -> i64 {
-                if (1) {
-
-                } else if (2) {
-
-                } else {
-
-                }
+            {
+                2 + 2 * 9
             }
 
-            func mulThree(a: i32) {
+            var e = 3 * ++c + 9++
+            var f = 7 * (1 + 1) / 4
+
+            var g = if(1 == 1) {
+                3
+            } else {
+                4
+            }
+
+            var h = if(2 * f < g + 1) {
+                3
+            } else if (4 >= 9) {
+                5 + 4
+            } else {
+                4
+            }
+
+            func mul(a: i32, b: i32) -> i64 {
+                var h = 1
+                return 4 + 5
+            }
+
+            func loop() {
                 while (1) {
 
                 }
@@ -87,12 +62,11 @@ class Main {
                 for(1; 2; 3) {
 
                 }
-                mul(a, 3);
-                (3)
             }
 
-            func main() -> i32 {
-                mulThree(mulThree(3));
+            func main() {
+                mul(1, 2)
+                loop()
             }
         ";
 

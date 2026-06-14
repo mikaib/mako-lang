@@ -148,7 +148,6 @@ class MOperatorPath {
 
             final binOp = intoBinOp(firstOperator);
             if (binOp.isNone()) {
-                trace(firstOperator);
                 throw new Exception("Unhandled None value");
             }
 
@@ -159,8 +158,6 @@ class MOperatorPath {
             }
 
             input.consume(1);
-
-            trace(binOp);
 
             var rightExprFlow = parser.parseNextPrimaryExpr();
             var rightExpr = switch rightExprFlow {
