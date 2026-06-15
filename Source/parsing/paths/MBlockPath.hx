@@ -21,10 +21,22 @@ class MBlockPath {
 
         var expressions = [];
 
-        while (!input.peek().kind.match(TBraceClose)) {
+        while (true) {
+            final next = input.peek();
+
+            if (next == null) {
+                context.emitError(MErrorKind.ParserMissingClosingBrace, input.intoArray());
+                return PParseError;
+            }
+
+            if (next.kind.match(TBraceClose)) {
+                break;
+            }
+
             switch parser.parseNextExpr() {
                 case PReturnSome(e): {
                     expressions.push(e);
+                    parser.consumeTerminator(e);
                 }
                 default: break;
             }

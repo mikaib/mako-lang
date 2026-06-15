@@ -35,4 +35,18 @@ class MExprTools {
         for (e in list) _iterateExpr(e, callback);
     }
 
+    public static function endsWithBlock(expr: MExpr): Bool {
+        return switch expr.kind {
+            case EBlock(_): true;
+            case EFunction(f): f.expr != null && endsWithBlock(f.expr);
+            case EFor(_, _, _, body): endsWithBlock(body);
+            case EWhile(_, ebody, isDoWhile): !isDoWhile && endsWithBlock(ebody);
+            case EIf(_, eif, eelse): eelse.hasValue() ? endsWithBlock(eelse.unwrap()) : endsWithBlock(eif);
+            case EBinop(_, _, _), EUnop(_, _, _), EArrayAccess(_, _), EArrayDecl(_),
+                 EObjectAccess(_, _), ECall(_, _), EParenthesis(_), EReturn(_),
+                 EVars(_), EConst(_), ECast(_, _), EBreak, EContinue:
+                false;
+        }
+    }
+
 }

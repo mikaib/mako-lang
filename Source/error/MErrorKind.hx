@@ -26,6 +26,8 @@ enum abstract MErrorKind(String) to String {
     public var ParserExpectedFunctionArgColon = "parser.expectedFunctionArgumentColon";
     public var ParserExpectedFunctionReturnType = "parser.expectedFunctionReturnType";
     public var ParserExpectedVariableType = "parser.expectedVariableType";
+    public var ParserExpectedSemicolon = "parser.expectedSemicolon";
+    public var ParserEmptyStatement = "parser.emptyStatement";
 
     ///Typer errors
     public var TyperUnificationFailed = "typer.unificationFailed";

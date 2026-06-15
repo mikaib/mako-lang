@@ -11,6 +11,7 @@ import parsing.paths.MOperatorPath;
 import parsing.paths.MFunctionPath;
 import parsing.paths.MBlockPath;
 import core.MArrayView.ArrayView;
+import core.MExprTools;
 import lexing.MTokenKind.MTokenKeyword;
 import lexing.MTokenKind;
 import parsing.paths.MCallPath;
@@ -20,7 +21,6 @@ import error.MErrorKind;
 import core.MConst;
 import haxe.macro.Expr.Constant;
 import parsing.paths.MObjectAccessPath;
-import parsing.paths.MObjectAccessPath.MObjectAccessPath.intoObjectAccess;
 using haxe.EnumTools.EnumValueTools;
 
 enum ParserFlowControl {
@@ -53,12 +53,49 @@ class MParser {
         var ast = new MExprList();
         while (tokens.length > 0) {
             switch parseNextExpr() {
-                case PReturnSome(e): ast.push(e);
+                case PReturnSome(e): {
+                    ast.push(e);
+                    consumeTerminator(e);
+                }
                 default: return ast;
             }
         }
 
         return ast;
+    }
+
+    public function consumeTerminator(expr: MExpr) {
+        final next = tokens.peek();
+        final hasSemi = next != null && next.kind.match(TSemiColon);
+
+        if (MExprTools.endsWithBlock(expr)) {
+            if (hasSemi) {
+                tokens.consume(1); // permitted but not required after a block
+            }
+            return;
+        }
+
+        if (hasSemi) {
+            tokens.consume(1);
+            return;
+        }
+
+        context.emitError(MErrorKind.ParserExpectedSemicolon, tokens.intoArray());
+        recoverToTerminator();
+    }
+
+    function recoverToTerminator() {
+        while (true) {
+            final t = tokens.peek();
+            if (t == null || t.kind.match(TBraceClose)) {
+                return;
+            }
+            if (t.kind.match(TSemiColon)) {
+                tokens.consume(1);
+                return;
+            }
+            tokens.consume(1);
+        }
     }
 
     public function parseNextExpr(): ParserFlowControl {
@@ -79,13 +116,15 @@ class MParser {
     }
 
     public function parseNextPrimaryExpr(): ParserFlowControl {
+        if (tokens.length == 0) {
+            return PParseError;
+        }
         // operators should already be handles by intoBinOpExpr in parseNextExpr or are invalid at this point.
         // e.g. * y should start with an expression, not an operator
         // ++x is valid, and should be parsed by an unop
         if (tokens.peek().kind.match(TTokenOperator(_))) {
             return MOperatorPath.intoUnOpExpr(tokens, None, context, this);
         }
-
 
         var expr = switch parseNextPrimaryExprInternal() {
             case PReturnSome(e): e;
@@ -139,12 +178,6 @@ class MParser {
         }
 
         if (funcCall.hasValue()) {
-            if (tokens.peek().kind.match(TSemiColon)) {
-                tokens.consume(1);
-            }
-            else {
-                // Might be operator, etc...
-            }
             return funcCall.unwrap();
         }
 
