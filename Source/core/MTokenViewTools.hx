@@ -3,8 +3,6 @@ import core.MArrayView.ArrayView;
 import lexing.MTokenKind;
 import lexing.MToken;
 import error.MErrorKind;
-import core.result.MResult;
-import core.result.MResultKind;
 
 using haxe.EnumTools.EnumValueTools;
 using core.MTokenViewTools;
