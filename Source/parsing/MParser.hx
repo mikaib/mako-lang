@@ -11,182 +11,207 @@ import parsing.paths.MOperatorPath;
 import parsing.paths.MFunctionPath;
 import parsing.paths.MBlockPath;
 import core.MArrayView.ArrayView;
+import core.MExprTools;
 import lexing.MTokenKind.MTokenKeyword;
-import haxe.exceptions.NotImplementedException;
 import lexing.MTokenKind;
 import parsing.paths.MCallPath;
-import haxe.Exception;
-import core.MTokenViewTools;
 import parsing.paths.MLoopPath;
 import core.MAccessLevel;
+import error.MErrorKind;
+import core.MConst;
+import haxe.macro.Expr.Constant;
+import parsing.paths.MObjectAccessPath;
+using haxe.EnumTools.EnumValueTools;
 
 enum ParserFlowControl {
     PReturnSome(expr: MExpr);
-    PReturnEaten;
-    PNotParsed;
+    PParseError;
 }
 
 class MParser {
+    var context: Context;
     var tokens: ArrayView<MToken>;
 
-    public function new(_tokens: ArrayView<MToken>) {
+    public function new(_tokens: ArrayView<MToken>, _context: Context) {
         tokens = _tokens;
+        context = _context;
     }
 
     public function intoMExpr(): MOption<MExpr> {
         if (tokens.length < 1) {
+            context.emitError(MErrorKind.ParserUnexpectedStreamEnd, tokens.intoArray());
             return None;
         }
 
-        var expressions = parseTree();
-        if (expressions.length > 1) {
-            throw new NotImplementedException("expressions length was more then 1");
+        return switch parseNextExpr() {
+            case PReturnSome(e): Some(e);
+            default: return None;
         }
-
-        return Some(expressions[0]);
-    }
-
-    private function splitSentence(input: ArrayView<MToken>): ArrayView<MToken> {
-        var readIndex = 0;
-        var depthBrace = 0;
-        var depthParent = 0;
-        while (readIndex < input.length) {
-            var kind = input[readIndex].kind;
-            readIndex++;
-
-            if (kind == TBraceOpen) depthBrace++;
-            else if (kind == TBraceClose) depthBrace--;
-            else if (kind == TParentOpen) depthParent++;
-            else if (kind == TParentClose) depthParent--;
-            else if (kind == TSemiColon && depthBrace == 0 && depthParent == 0) {
-                var slice = input.subslice(0, readIndex);
-                input.consume(readIndex);
-                MTokenViewTools.expectBack(slice, TSemiColon);
-                return slice;
-            }
-        }
-        return input;
     }
 
     public function parseTree(): MExprList {
         var ast = new MExprList();
         while (tokens.length > 0) {
-            var expr = parseNextExpr();
-            if (expr.hasValue()) {
-                ast.push(expr.unwrap());
-            }
-            else {
-                return ast;
+            switch parseNextExpr() {
+                case PReturnSome(e): {
+                    ast.push(e);
+                    consumeTerminator(e);
+                }
+                default: return ast;
             }
         }
 
         return ast;
     }
 
-    public function expectExprs(exprCount: Int, customErrorMsg: MOption<String>): Array<MExpr> {
-        var exprArr = [];
-        for (i in 0...exprCount - 1) {
-            var expr = parseNextExpr();
-            if (expr.isNone()) {
-                if (customErrorMsg.hasValue()) {
-                    throw new Exception(customErrorMsg.unwrap());
-                }
-                throw new Exception('Expected expr, found none');
+    public function consumeTerminator(expr: MExpr) {
+        final next = tokens.peek();
+        final hasSemi = next != null && next.kind.match(TSemiColon);
+
+        if (MExprTools.endsWithBlock(expr)) {
+            if (hasSemi) {
+                tokens.consume(1); // permitted but not required after a block
             }
-            exprArr.push(expr.unwrap());
+            return;
         }
 
-        return exprArr;
+        if (hasSemi) {
+            tokens.consume(1);
+            return;
+        }
+
+        context.emitError(MErrorKind.ParserExpectedSemicolon, tokens.intoArray());
+        recoverToTerminator();
     }
 
-    public function parseNextExpr(): MOption<MExpr> {
-        var flowControl = switch (tokens[0].kind) {
-            case TKeyword(KIf):
-                MIfPath.intoEIf(tokens);
-            case TParentOpen:
-                MParentPath.intoEParent(tokens);
-            case TKeyword(KReturn):
-                MReturnPath.intoEReturn(tokens);
-            case TBraceOpen:
-                var block = MParseBlocker.createBlock(tokens, Some(TBraceOpen), TBraceClose);
-                MBlockPath.intoEBlock(block);
-            default:
-                PNotParsed;
+    function recoverToTerminator() {
+        while (true) {
+            final t = tokens.peek();
+            if (t == null || t.kind.match(TBraceClose)) {
+                return;
+            }
+            if (t.kind.match(TSemiColon)) {
+                tokens.consume(1);
+                return;
+            }
+            tokens.consume(1);
+        }
+    }
+
+    public function parseNextExpr(): ParserFlowControl {
+        switch parseNextPrimaryExpr() {
+            case PReturnSome(expr): {
+                if (tokens.peek() == null) {
+                    return PReturnSome(expr);
+                }
+
+                switch tokens.peek().kind {
+                    case TTokenOperator(_): return MOperatorPath.intoBinOpExpr(tokens, expr, None, context, this);
+                    case TDot: return MObjectAccessPath.intoObjectAccess(expr, tokens, context, this);
+                    case _: return PReturnSome(expr);
+                }
+            }
+            case PParseError: return PParseError;
+        }
+    }
+
+    public function parseNextPrimaryExpr(): ParserFlowControl {
+        if (tokens.length == 0) {
+            return PParseError;
+        }
+        // operators should already be handles by intoBinOpExpr in parseNextExpr or are invalid at this point.
+        // e.g. * y should start with an expression, not an operator
+        // ++x is valid, and should be parsed by an unop
+        if (tokens.peek().kind.match(TTokenOperator(_))) {
+            return MOperatorPath.intoUnOpExpr(tokens, None, context, this);
         }
 
-        switch (flowControl) {
-            case PReturnSome(val): return Some(val);
-            case _: null;
+        var expr = switch parseNextPrimaryExprInternal() {
+            case PReturnSome(e): e;
+            case PParseError: return PParseError;
+        }
+
+        var nextToken = tokens.peek();
+        if (nextToken == null) {
+            return PReturnSome(expr);
+        }
+
+        if (MOperatorPath.isPostfixUnop(nextToken.kind)) {
+            return MOperatorPath.intoUnOpExpr(tokens, Some(expr), context, this);
+        }
+
+        return PReturnSome(expr);
+    }
+
+    private function parseNextPrimaryExprInternal(): ParserFlowControl {
+        var optionExpr: MOption<ParserFlowControl> = switch (tokens[0].kind) {
+            case TKeyword(KIf):
+                Some(MIfPath.intoEIf(tokens, context, this));
+            case TParentOpen:
+                Some(MParentPath.intoEParent(tokens, context, this));
+            case TKeyword(KReturn):
+                Some(MReturnPath.intoEReturn(tokens, context, this));
+            case TBraceOpen:
+                Some(MBlockPath.intoEBlock(tokens, context, this));
+            default:
+                None;
+        }
+
+        if (optionExpr.hasValue()) {
+            return optionExpr.unwrap();
         }
 
         if(tokens[0].kind.match(TKeyword(KWhile))
             || tokens[0].kind.match(TKeyword(KDo))
             || tokens[0].kind.match(TKeyword(KFor))
         ) {
-            var flowControl = MLoopPath.intoLoop(tokens);
-            switch (flowControl) {
-                case PReturnSome(val): return Some(val);
-                default: throw new Exception("Could not parse loop");
-            }
+            return MLoopPath.intoLoop(tokens, context, this);
         }
 
-        var sentence = splitSentence(tokens);
-        if (sentence.length == 0) {
-            return None;
-        }
-
-        if (MCallPath.isFuncCall(sentence)) {
-            var flowControl = MCallPath.parseFuncCall(sentence);
-            switch (flowControl) {
-                case PReturnSome(val): {
-                    return Some(val);
+        var funcCall: MOption<ParserFlowControl> = None;
+        switch tokens[0].kind {
+            case TConst(CIdent(_)):
+                if (tokens[1].kind.match(TParentOpen)) {
+                    funcCall = Some(MCallPath.parseFuncCall(tokens, context, this));
                 }
-                default:
-                    throw new Exception("Could not parse call");
-            }
+            case _:
         }
 
-        trace(sentence.map(t -> '${t.kind}'));
+        if (funcCall.hasValue()) {
+            return funcCall.unwrap();
+        }
 
-        final accessSpecifier = switch sentence[0].kind {
-            case TKeyword(KPublic): sentence.consume(1); APublic;
-            case TKeyword(KProtected): sentence.consume(1); AProtected;
-            case TKeyword(KPrivate): sentence.consume(1); APrivate;
+        final accessSpecifier = switch tokens.peek().kind {
+            case TKeyword(KPublic): tokens.consume(1); APublic;
+            case TKeyword(KProtected): tokens.consume(1); AProtected;
+            case TKeyword(KPrivate): tokens.consume(1); APrivate;
             default: APrivate;
         };
 
-        var control: MOption<ParserFlowControl> = switch sentence[0].kind {
-            case TKeyword(KFunc): Some(MFunctionPath.intoEFunction(sentence, accessSpecifier));
-            case TKeyword(KVar): Some(MVarsPath.intoEVars(sentence, accessSpecifier));
-            case TKeyword(KConst): Some(MVarsPath.intoEVars(sentence, accessSpecifier));
+        var control: MOption<ParserFlowControl> = switch tokens.peek().kind {
+            case TKeyword(KFunc): Some(MFunctionPath.intoEFunction(tokens, accessSpecifier, context, this));
+            case TKeyword(KVar): Some(MVarsPath.intoEVars(tokens, accessSpecifier, context, this));
+            case TKeyword(KConst): Some(MVarsPath.intoEVars(tokens, accessSpecifier, context, this));
             default: None;
         };
 
         if (control.hasValue()){
-            var flowControl = control.unwrap();
-            switch (flowControl) {
-                case PReturnSome(val): return Some(val);
-                default: throw new Exception("Parse was unsuccessfull");
-            }
+            return control.unwrap();
         }
+
+        if (tokens.peek().kind.match(TConst(_))) {
+            return MConstPath.IntoEConst(tokens, None, context);
+        }
+
+        /*
 
         if(MOperatorPath.IsOperator(sentence)) {
-            var flowControl = MOperatorPath.intoOperationAST(sentence, None);
-            switch (flowControl) {
-                case PReturnSome(val): return Some(val);
-                default: throw new Exception("Could not parse operator");
-            }
-        }
-
-        if (sentence.length == 1 && sentence[0].kind.match(TConst(_))) {
-            var flowControl = MConstPath.IntoEConst(sentence);
-            switch (flowControl) {
-                case PReturnSome(val): return Some(val);
-                default: null;
-            }
+            return MOperatorPath.intoOperationAST(sentence, None, context, this);
         }
 
         trace('Not all tokens could be parsed: ${tokens.map(t -> '${t.kind}, ')}');
-        return None;
+        context.emitError(MErrorKind.ParserUnparsedTokens, tokens.intoArray());
+         */
+        return PParseError;
     }
 }

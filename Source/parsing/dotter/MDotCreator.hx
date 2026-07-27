@@ -71,7 +71,7 @@ class MDotCreator {
                 };
             case EFunction(f):
                 return {
-                    label: 'func ${f.name} (${f.args.map(arg -> '${arg.name}, ${arg.type}')}): ${f.returnType}',
+                    label: 'func ${f.name} (${f.args.map(arg -> '${arg.name}: ${arg.type}')}): ${f.returnType}',
                     children: [f.expr],
                 };
             case EObjectAccess(left, right):
@@ -93,7 +93,7 @@ class MDotCreator {
                     var d = decls[0];
                     return {
                         label: '${d.access} ${d.const == true ? "const " : ""}${d.name}: ${d.type}',
-                        children: d.expr != null ? [d.expr] : [],
+                        children: d.expr.hasValue() ? [d.expr.unwrap()] : [],
                     }
                 }
 

@@ -178,22 +178,18 @@
     | private
 
 ### EVars
-    AccessSpecifier const : TYPE = MExpr
-    | AccessSpecifier var : TYPE = MExpr
-    | const : TYPE = MExpr
-    | var : TYPE = MExpr
-    | AccessSpecifier const = MExpr
-    | AccessSpecifier var = MExpr
-    | const = MExpr
-    | var = MExpr
-    | AccessSpecifier const : TYPE
-    | AccessSpecifier var : TYPE
-    | const : TYPE
-    | var : TYPE
-    | AccessSpecifier const
-    | AccessSpecifier var
-    | const
-    | var
+    AccessSpecifier const : TYPE IDENTIFIER = MExpr
+    | AccessSpecifier var : TYPE IDENTIFIER = MExpr
+    | const : TYPE IDENTIFIER = MExpr
+    | var : TYPE IDENTIFIER = MExpr
+    | AccessSpecifier const IDENTIFIER = MExpr
+    | AccessSpecifier var IDENTIFIER = MExpr
+    | const IDENTIFIER = MExpr
+    | var IDENTIFIER = MExpr
+    | AccessSpecifier const : TYPE IDENTIFIER
+    | AccessSpecifier var : TYPE IDENTIFIER
+    | const : TYPE IDENTIFIER
+    | var : TYPE IDENTIFIER
 
 ### ECast
     ( TYPE ) IDENTIFIER

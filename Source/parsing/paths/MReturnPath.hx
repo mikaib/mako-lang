@@ -3,34 +3,34 @@ import lexing.MToken;
 import core.MArrayView.ArrayView;
 import parsing.MParser.ParserFlowControl;
 import lexing.MTokenKind;
-import core.MOptionKind.None;
+import error.MErrorKind;
 using core.MTokenViewTools;
 
 class MReturnPath {
-    public static function intoEReturn(input: ArrayView<MToken>): ParserFlowControl {
+    public static function intoEReturn(input: ArrayView<MToken>, context: Context, parser: MParser): ParserFlowControl {
         if (input.length == 0) {
-            return PNotParsed;
+            context.emitError(MErrorKind.ParserUnexpectedStreamEnd, input.intoArray());
+            return PParseError;
         }
 
         var min = input[0];
-        var max = input[input.length - 1].pos.max;
 
-        input.expect(TKeyword(KReturn));
-
-        var block = MParseBlocker.createBlock(input, None, TSemiColon);
-        var expression = new MParser(block).intoMExpr();
-        if (expression.isNone()) {
-            return PNotParsed;
+        if(!input.expect(TKeyword(KReturn), context)) {
+            return PParseError;
         }
 
-        var ret = expression.unwrap();
+        var expressionFlow = parser.parseNextExpr();
+        var expression = switch expressionFlow {
+            case PReturnSome(e): e;
+            case _: return expressionFlow;
+        }
 
         return PReturnSome({
-            kind: MExprKind.EReturn(ret),
+            kind: MExprKind.EReturn(expression),
             pos: {
                 path: min.pos.path,
                 min: min.pos.min,
-                max: max,
+                max: input.previous().pos.max,
             }
         });
     }
