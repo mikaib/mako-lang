@@ -6,6 +6,10 @@ enum MBinop {
     Mul;
     Eq;
     NotEq;
+    GreaterThen;
+    GreaterThenEqualTo;
+    LessThen;
+    LessThenEqualTo;
     Div;
     Mod;
     Or;
@@ -13,6 +17,8 @@ enum MBinop {
     BitOr;
     BitAnd;
     BitXor;
+    Equal;
+    NotEqual;
     LessThan;
     GreaterThan;
     EqualGreaterThan;

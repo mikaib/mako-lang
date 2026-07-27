@@ -7,110 +7,91 @@ import core.MFuncDecl;
 import lexing.MTokenKind.MTokenKeyword.KFunc;
 import core.MOptionKind;
 import lexing.MTokenKind;
-import core.MConst;
+import core.MConst.CIdent;
 import typing.MType;
+import parsing.paths.MBlockPath;
+import haxe.Exception;
 import core.MAccessLevel;
-import error.MErrorKind;
-import core.MOption;
-import core.MFuncArg;
 
 using core.MTokenViewTools;
 
 class MFunctionPath {
-    private static function parseFunctionDefArgs(input: ArrayView<MToken>, context: Context, parser: MParser): MOption<Array<MFuncArg>> {
-        var arguments: Array<MFuncArg> = [];
-
-        while (!input.peek().kind.match(TParentClose)) {
-            final argName = switch (input.next().kind) {
-                case TConst(CIdent(name)):
-                    name;
-                default:
-                    context.emitError(MErrorKind.ParserExpectedFunctionArgumentName, input.intoArray());
-                    return None;
-            }
-
-            if (!input.next().kind.match(TColon)) {
-                context.emitError(MErrorKind.ParserExpectedFunctionArgColon, input.intoArray());
-                return None;
-            }
-
-            final type = switch MConstPath.IntoEConst(input, Some(CIdent("")), context) {
-                case PReturnSome(const):
-                    switch const.kind {
-                        case EConst(CIdent(type)):
-                            type;
-                        default:
-                            return None;
-                    }
-                default:
-                    return None;
-            }
-
-            arguments.push({
-                name: argName,
-                type: MType.make(type),
-            });
-
-            if (!input.peek().kind.match(TComma)) {
-                break;
-            }
-            input.consume(1);
-        }
-        return Some(arguments);
-    }
-
-    public static function intoEFunction(input: ArrayView<MToken>, accessLevel: MAccessLevel, context: Context, parser: MParser): ParserFlowControl {
+    public static function intoEFunction(input: ArrayView<MToken>, accessLevel: MAccessLevel): ParserFlowControl {
+        var readIndex = 0;
         var func: MFuncDecl = {};
         var minToken = input[0];
 
         func.access = accessLevel;
 
         // Is function
-        if(!input.expect(TKeyword(KFunc), context)) {
-            return PParseError;
-        }
+        input.expect(TKeyword(KFunc));
 
         // read name
-        switch (input.next().kind) {
-            case TConst(CIdent(name)):
-                func.name = name;
+        switch (input[readIndex].kind) {
+            case TConst(CIdent(n)):
+                func.name = n;
+                readIndex += 1;
             default:
-                context.emitError(MErrorKind.ParserExpectedFunctionName, input.intoArray());
-                return PParseError;
+                throw new Exception("Function missing name");
         }
 
-        if(!input.expect(TParentOpen, context)) {
-            return PParseError;
-        }
+        input.consume(readIndex);
 
-        final args = parseFunctionDefArgs(input, context, parser);
-        if (args.isNone()) {
-            return PParseError;
-        }
-        func.args = args.unwrap();
-        if (!input.expect(TParentClose, context)) {
-            return PParseError;
-        }
+        // arguments
+        var argBlock = MParseBlocker.createBlock(input, Some(TParentOpen), TParentClose);
+        argBlock.consume(1); // Consume TParentOpen
 
-        if (input.peek().kind.match(TFuncAssign)) {
-            input.consume(1);
-            switch input.next().kind {
-                case TConst(CIdent(type)): func.returnType = MType.make(type);
-                default: {
-                    context.emitError(MErrorKind.ParserExpectedFunctionReturnType, input.intoArray());
-                    return PParseError;
-                }
+        while (argBlock.length > 0) {
+            if (argBlock[0].kind.match(TParentClose)) {
+                argBlock.consume(1);
+                break;
             }
-        }
-        else {
-            func.returnType = MType.make("void");
+
+            switch ([
+                argBlock[0]?.kind,
+                argBlock[1]?.kind,
+                argBlock[2]?.kind,
+            ]) {
+                case [TConst(CIdent(n)), TColon, TConst(CIdent(t))]:
+                    func.args.push({
+                        name: n,
+                        type: MType.make(t),
+                    });
+                    argBlock.consume(3);
+
+                default:
+                    throw new Exception('Expected typed parameter, found: ${argBlock.map(t -> '${t}')}');
+            }
+
+            if (!argBlock[0].kind.match(TComma)) {
+                if (!argBlock[0].kind.match(TParentClose)) {
+                    throw new Exception('Expected ), got ${argBlock[0].kind}');
+                }
+                break;
+            }
+            argBlock.consume(1);
         }
 
-        func.expr = switch parser.parseNextExpr() {
-            case PReturnSome(expr):
-                expr;
+        switch ([
+            input[0]?.kind,
+            input[1]?.kind,
+        ]) {
+            case [TFuncAssign, TConst(CIdent(t))]:
+                func.returnType = MType.make(t);
+                input.consume(2);
+
             default:
-                return PParseError;
+                func.returnType = MType.make("void");
+        }
+
+        var funcBlock = MParseBlocker.createBlock(input, Some(TBraceOpen), TBraceClose);
+        var max = funcBlock[funcBlock.length - 1].pos.max;
+        var expression = MBlockPath.intoEBlock(funcBlock);
+        switch (expression) {
+            case PReturnSome(v):
+                func.expr = v;
+            default:
+                func.expr = null;
         }
 
         return PReturnSome({
@@ -118,7 +99,7 @@ class MFunctionPath {
             pos: {
                 path: minToken.pos.path,
                 min: minToken.pos.min,
-                max: input.previous().pos.max,
+                max: max,
             },
             type: MType.callable(func.args.map(arg -> arg.type), func.returnType)
         });

@@ -25,41 +25,11 @@ abstract ArrayView<T>(ArrayViewData<T>) from ArrayViewData<T> to ArrayViewData<T
     }
 
     @:arrayAccess
-    public function get(index: Int): Null<T> {
+    public function get(index: Int):Null<T> {
         if (index < 0 || index >= this.length) {
             return null;
         }
         return this.data[this.offset + index];
-    }
-
-    public function peek(): Null<T> {
-        if (this.length == 0) {
-            return null;
-        }
-        return this.data[this.offset];
-    }
-
-    public function next(): Null<T> {
-        if (this.length == 0) {
-            return null;
-        }
-        final value = this.data[this.offset];
-        consume(1);
-        return value;
-    }
-
-    public function previous(): Null<T> {
-        if (this.offset == 0) {
-            return null;
-        }
-        return this.data[this.offset - 1];
-    }
-
-    public function last():Null<T> {
-        if (this.length == 0) {
-            return null;
-        }
-        return this.data[this.offset + this.length - 1];
     }
 
     public function consume(n: Int): ArrayView<T> {
@@ -81,8 +51,15 @@ abstract ArrayView<T>(ArrayViewData<T>) from ArrayViewData<T> to ArrayViewData<T
         return this;
     }
 
-    public function intoArray(): Array<T> {
-        return this.data.slice(this.offset, this.offset + this.length);
+    public function subslice(start: Int, len: Int): ArrayView<T> {
+        if (start < 0 || len < 0 || start + len > this.length) {
+            throw "Index out of bounds";
+        }
+
+        var view: ArrayViewData<T> = new ArrayView<T>(this.data);
+        view.offset = this.offset + start;
+        view.length = len;
+        return view;
     }
 
     public function map<U>(f: T -> U): Array<U> {

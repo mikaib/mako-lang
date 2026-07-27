@@ -19,7 +19,7 @@ class MExprTools {
             case EFor(e0, e1, e2, e3): if (e0 != null) invoke(e0); if (e1 != null) invoke(e1); if (e2 != null) invoke(e2); if (e3 != null) invoke(e3);
             case EIf(e0, e1, e2): invoke(e0); invoke(e1); if (e2.hasValue()) invoke(e2.unwrap());
             case ECall(e0, list): invoke(e0); for (e in list) invoke(e);
-            case EVars(decls): for (d in decls) if (d.expr.hasValue()) invoke(d.expr.unwrap());
+            case EVars(decls): for (d in decls) if (d.expr != null) invoke(d.expr);
             case EFunction(f) if (f.expr != null): invoke(f.expr);
             case EConst(_), EBreak, EContinue, EFunction(_): null;
         }
@@ -33,20 +33,6 @@ class MExprTools {
 
     private static function _iterateList(list: MExprList, callback: MExpr->Void): Void {
         for (e in list) _iterateExpr(e, callback);
-    }
-
-    public static function endsWithBlock(expr: MExpr): Bool {
-        return switch expr.kind {
-            case EBlock(_): true;
-            case EFunction(f): f.expr != null && endsWithBlock(f.expr);
-            case EFor(_, _, _, body): endsWithBlock(body);
-            case EWhile(_, ebody, isDoWhile): !isDoWhile && endsWithBlock(ebody);
-            case EIf(_, eif, eelse): eelse.hasValue() ? endsWithBlock(eelse.unwrap()) : endsWithBlock(eif);
-            case EBinop(_, _, _), EUnop(_, _, _), EArrayAccess(_, _), EArrayDecl(_),
-                 EObjectAccess(_, _), ECall(_, _), EParenthesis(_), EReturn(_),
-                 EVars(_), EConst(_), ECast(_, _), EBreak, EContinue:
-                false;
-        }
     }
 
 }

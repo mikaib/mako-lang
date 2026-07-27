@@ -4,43 +4,28 @@ import lexing.MToken;
 import typing.MType;
 import parsing.MParser.ParserFlowControl;
 import core.MArrayView.ArrayView;
-import parsing.MExprKind;
+import haxe.exceptions.NotImplementedException;
 
 using core.MTokenViewTools;
 
 class MObjectAccessPath {
-    public static function intoObjectAccess(left: MExpr, input: ArrayView<MToken>, context: Context, parser: MParser): ParserFlowControl {
-        if(!input.expect(TDot, context)) {
-            return PParseError;
-        }
-
-        var rightControl = parser.parseNextExpr();
+    public static function intoObjectAccess(left: MExpr, input: ArrayView<MToken>): ParserFlowControl {
+        input.expect(TDot);
+        var rightControl = MCallPath.parseFuncCall(input);
         var right = switch rightControl {
-            case PReturnSome(r): r;
-            default: return rightControl;
+            case PReturnSome(r):
+                r;
+            case PReturnEaten | PNotParsed:
+                throw new NotImplementedException('Expected function, got ${input.map(t -> '${t.kind}')}');
         }
-
-        var exprControl = PReturnSome({
-            kind: EObjectAccess(left, right),
+        return PReturnSome({
+            kind: MExprKind.EObjectAccess(left, right),
             pos: {
                 path: left.pos.path,
                 min: left.pos.min,
-                max: input.previous().pos.max,
+                max: right.pos.max,
             },
             type: MType.mono(),
         });
-
-        var expr = switch exprControl {
-            case PReturnSome(expr): expr;
-            case PParseError: return PParseError;
-        }
-
-        if (input.peek() != null) {
-            if (input.peek().kind.match(TDot)) {
-                return intoObjectAccess(expr, input, context, parser);
-            }
-        }
-
-        return exprControl;
     }
 }

@@ -4,122 +4,92 @@ import parsing.MParser.ParserFlowControl;
 import lexing.MToken;
 import core.MArrayView.ArrayView;
 import lexing.MTokenKind;
+import core.MVarDecl;
 import core.MConst;
 import typing.MType;
 import haxe.Exception;
 import core.MAccessLevel;
-import core.MOption;
-import core.MOptionKind;
-import error.MErrorKind;
-
-using core.MTokenViewTools;
 
 class MVarsPath {
-    private static function getVarName(input: ArrayView<MToken>, context: Context): MOption<String> {
-        var token = input.peek();
 
-        if (token == null) {
-            return None;
-        }
+    public static function intoEVars(input: ArrayView<MToken>, accessLevel: MAccessLevel): ParserFlowControl {
+        trace(input.map(t -> '${t.kind}'));
+        var readIndex = 0;
+        var minToken = input[0];
 
-        return switch input.next().kind {
-            case TConst(CIdent(v)):
-                Some(v);
-
-            default:
-                context.emitError(MErrorKind.ParserExpectedVariableName, input.intoArray());
-                None;
-        }
-    }
-
-    private static function getVarType(input: ArrayView<MToken>, context: Context): MOption<MType> {
-        var token = input.peek();
-
-        if (token == null) {
-            return None;
-        }
-
-        if (!token.kind.match(TColon)) {
-            return Some(MType.mono());
-        }
-
-        input.consume(1);
-
-        token = input.peek();
-
-        if (token == null) {
-            return None;
-        }
-
-        return switch input.next().kind {
-            case TConst(CIdent(v)):
-                Some(MType.make(v));
-
-            default:
-                context.emitError(MErrorKind.ParserExpectedVariableType, input.intoArray());
-                None;
-        }
-    }
-
-    public static function intoEVars(input:ArrayView<MToken>, accessLevel:MAccessLevel, context:Context, parser:MParser): ParserFlowControl {
-        if (input.peek() == null) {
-            return PParseError;
-        }
-
-        var minToken = input.peek();
-
-        var isConst = switch input.next().kind {
-            case TKeyword(KConst):
+        // Is variable
+        var isConst = switch ([
+            input[readIndex]?.kind,
+        ]) {
+            case [TKeyword(KConst)]:
+                readIndex += 1;
                 true;
-
-            case TKeyword(KVar):
+            case [TKeyword(KVar)]:
+                readIndex += 1;
                 false;
-
             default:
-                throw new Exception('Internal compiler error: Expected const or var, found: ${input.peek()?.kind}');
+                throw new Exception('Expected const or var, found: ${input[readIndex].kind}');
         };
 
-        var varName = getVarName(input, context);
-
-        if (varName.isNone()) {
-            return PParseError;
-        }
-
-        var varType = getVarType(input, context);
-
-        if (varType.isNone()) {
-            return PParseError;
-        }
-
-        var expression: MOption<MExpr> = None;
-
-        var nextToken = input.peek();
-
-        if (nextToken != null && nextToken.kind.match(TTokenOperator(OAssign))) {
-            input.consume(1);
-
-            expression = switch parser.parseNextExpr() {
-                case PReturnSome(e):
-                    Some(e);
-
+        // Variable name
+        var varName = switch ([
+                input[readIndex]?.kind,
+            ]) {
+                case [TConst(CIdent(v))]:
+                    readIndex += 1;
+                    v;
                 default:
-                    return PParseError;
-            };
+                    throw new Exception('Error parsing var: ${input[readIndex].kind}');
+            }
+
+        // Type
+        var varType = switch ([
+            input[readIndex]?.kind,
+            input[readIndex + 1]?.kind,
+        ]) {
+            case [TColon, TConst(CIdent(v))]:
+                readIndex += 2;
+                MType.make(v);
+            default:
+                MType.mono();
         }
 
-        return PReturnSome({
-            kind: MExprKind.EVars([{
-                const: isConst,
-                name: varName.unwrap(),
-                type: varType.unwrap(),
-                expr: expression,
-                access: accessLevel,
-            }]),
-            pos: {
-                min: minToken.pos.min,
-                max: input.previous().pos.max,
-                path: minToken.pos.path,
-            }
-        });
+        if (!input[readIndex].kind.match(TTokenOperator(OAssign))) {
+            throw new Exception('Expected =, got ${input[readIndex].kind}');
+        }
+        readIndex++;
+
+        input.consume(readIndex);
+
+        // variable expression
+        var max = input[input.length - 1].pos.max;
+
+        var expression = null;
+
+        var expressionTokens = new MParser(input).intoMExpr();
+        if (expressionTokens.hasValue()) {
+            expression = expressionTokens.unwrap();
+        }
+
+        if (expressionTokens.hasValue()) {
+            expression = expressionTokens.unwrap();
+        }
+
+        return PReturnSome(
+             {
+                 kind: MExprKind.EVars([{
+                        const: isConst,
+                        name: varName,
+                        type: varType,
+                        expr: expression,
+                        access: accessLevel,
+                    }]),
+                 pos: {
+                     min: minToken.pos.min,
+                     max: max,
+                     path: minToken.pos.path,
+                 }
+             }
+        );
     }
 }

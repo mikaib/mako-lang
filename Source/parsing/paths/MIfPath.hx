@@ -5,36 +5,40 @@ import core.MOptionKind;
 import lexing.MToken;
 import lexing.MTokenKind;
 import parsing.MExpr;
+import parsing.MExprKind.EIf;
 import parsing.MParser.ParserFlowControl;
 import haxe.Exception;
-import error.MErrorKind;
 using core.MTokenViewTools;
 using core.MTokenViewTools;
 
 class MIfPath {
 
-    private static function parseElse(input: ArrayView<MToken>, currentIf: MExpr, context: Context, parser: MParser): ParserFlowControl {
-        if (input.length == 0 || !input.peek().kind.match(TKeyword(KElse))) {
+    private static function parseElse(input: ArrayView<MToken>, currentIf: MExpr): MExpr {
+        if (input.length == 0 || !input[0].kind.match(TKeyword(KElse))) {
             switch (currentIf.kind) {
                 case EIf(cond, eif, _): currentIf.kind = EIf(cond, eif, None);
                 default: throw new Exception("Internal compiler error, reached unreachable path");
             }
-            return PReturnSome(currentIf);
+            return currentIf;
         }
 
-        input.expect(TKeyword(KElse), context);
+        input.expect(TKeyword(KElse));
 
         var eElse: MExpr;
-        if (input.peek().kind.match(TKeyword(KIf))) {
-            eElse = switch intoEIf(input, context, parser) {
-                case PReturnSome(mIf): mIf;
-                default: return PParseError;
-            }
+        if (input[0].kind.match(TKeyword(KIf))) {
+            var control = intoEIf(input);
+            eElse = switch (control) {
+                case PReturnSome(v): v;
+                case PReturnEaten: throw new Exception("Error parsing else-if");
+                case PNotParsed: throw new Exception("Error parsing else-if");
+            };
         } else {
-            eElse = switch parser.parseNextExpr() {
-                case PReturnSome(e): e;
-                default: return PParseError;
+            var expr = new MParser(input).parseNextExpr();
+            if (expr == None) {
+                throw new Exception("Error parsing else");
             }
+
+            eElse = expr.unwrap();
         }
 
         switch (currentIf.kind) {
@@ -43,43 +47,39 @@ class MIfPath {
             default:
         }
         currentIf.pos.max = eElse.pos.max;
-        return PReturnSome(currentIf);
+        return currentIf;
     }
 
-    public static function intoEIf(input: ArrayView<MToken>, context: Context, parser: MParser): ParserFlowControl {
-        if (input.length == 0) {
-            throw new Exception("Internal compiler error, reached unreachable codo");
+    public static function intoEIf(input: ArrayView<MToken>): ParserFlowControl {
+        if (input.length == 0 || !input[0].kind.match(TKeyword(KIf))) {
+            return PNotParsed;
         }
 
-        var min = input[0];
+        var path = input[0].pos.path;
+        var minPos = input[0].pos.min;
+        input.consume(1);
 
-        if (!input.expect(TKeyword(KIf), context)) {
-            return PParseError;
+        var cond = new MParser(input).parseNextExpr();
+        if (cond == None) {
+            throw new Exception("Expected expression, found void");
         }
+        var condition = cond.unwrap();
 
-        var condition = switch parser.parseNextExpr() {
-            case PReturnSome(e): e;
-            default:
-                context.emitError(MErrorKind.ParserExpectedIfCondition, input.intoArray());
-                return PParseError;
+        var expr = new MParser(input).parseNextExpr();
+        if (expr == None) {
+            throw new Exception("Expected expression, found void");
         }
-
-        var expression = switch parser.parseNextExpr() {
-            case PReturnSome(e): e;
-            default:
-                context.emitError(MErrorKind.ParserExpectedIfExpression, input.intoArray());
-                return PParseError;
-        }
+        var expression = expr.unwrap();
 
         var ifExpr: MExpr = {
             kind: EIf(condition, expression, None),
             pos: {
-                path: min.pos.path,
-                min: min.pos.min,
-                max: input.previous().pos.max,
+                path: path,
+                min: minPos,
+                max: expression.pos.max,
             },
         };
 
-        return parseElse(input, ifExpr, context, parser);
+        return PReturnSome(parseElse(input, ifExpr));
     }
 }

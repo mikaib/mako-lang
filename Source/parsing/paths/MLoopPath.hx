@@ -7,133 +7,100 @@ import parsing.MParser.ParserFlowControl;
 import lexing.MTokenKind;
 import core.MOptionKind;
 import typing.MType;
-import error.MErrorKind;
-import core.MOption;
 
 using core.MTokenViewTools;
 
 class MLoopPath {
-    private static function intoDoWhileLoop(input: ArrayView<MToken>, context: Context, parser: MParser): ParserFlowControl {
+    private static function intoDoWhileLoop(input: ArrayView<MToken>): ParserFlowControl {
         final min = input[0];
-        input.expect(TKeyword(KDo), context);
-        var expression = switch parser.parseNextExpr() {
-            case PReturnSome(e): e;
-            default:
-                context.emitError(MErrorKind.ParserDoWhileExpectedExpr, input.intoArray());
-                return PParseError;
+        input.expect(TKeyword(KDo));
+        var expr = new MParser(input).parseNextExpr();
+        if (expr == None) {
+            throw new Exception("Expected expression, found void");
         }
+        var expression = expr.unwrap();
 
-        input.expect(TKeyword(KWhile), context);
-        var condition = switch parser.parseNextExpr() {
-            case PReturnSome(c): c;
-            default:
-                context.emitError(MErrorKind.ParserDoWhileExpectedCondition, input.intoArray());
-                return PParseError;
+        input.expect(TKeyword(KWhile));
+        var cond = new MParser(input).parseNextExpr();
+        if (cond == None) {
+            throw new Exception("Expected expression, found void");
         }
-
+        var condition = cond.unwrap();
         return PReturnSome({
             kind: MExprKind.EWhile(condition, expression, true),
             pos: {
                 path: min.pos.path,
                 min: min.pos.min,
-                max: input.previous().pos.max,
+                max: condition.pos.max,
 
             },
             type: MType.mono(),
         });
     }
 
-    private static function intoWhileLoop(input: ArrayView<MToken>, context: Context, parser: MParser): ParserFlowControl{
+    private static function intoWhileLoop(input: ArrayView<MToken>): ParserFlowControl{
         final min = input[0];
-        input.expect(TKeyword(KWhile), context);
-        var condition = switch parser.parseNextExpr() {
-            case PReturnSome(c): c;
-            default: return PParseError;
+        input.expect(TKeyword(KWhile));
+        var cond = new MParser(input).parseNextExpr();
+        if (cond == None) {
+            throw new Exception("Expected expression, found void");
         }
+        var condition = cond.unwrap();
 
-        var expression = switch parser.parseNextExpr() {
-            case PReturnSome(e): e;
-            default: return PParseError;
+
+        var expr = new MParser(input).parseNextExpr();
+        if (expr == None) {
+            throw new Exception("Expected expression, found void");
         }
+        var expression = expr.unwrap();
 
         return PReturnSome({
             kind: MExprKind.EWhile(condition, expression, false),
             pos: {
                 path: min.pos.path,
                 min: min.pos.min,
-                max: input.previous().pos.max
+                max: expression.pos.max
             },
             type: MType.mono(),
         });
     }
 
-    private static function parseForExpressions(input: ArrayView<MToken>, context: Context, parser: MParser): MOption<MExprList> {
-        var exprArr = [];
-
-        switch parser.parseNextExpr() {
-            case PReturnSome(e): exprArr.push(e);
-            default: return None;
-        }
-        if(!input.expect(TSemiColon, context)) {
-            return None;
-        }
-
-        switch parser.parseNextExpr() {
-            case PReturnSome(e): exprArr.push(e);
-            default: return None;
-        }
-        if(!input.expect(TSemiColon, context)) {
-            return None;
-        }
-
-        switch parser.parseNextExpr() {
-            case PReturnSome(e): exprArr.push(e);
-            default: return None;
-        }
-
-        return Some(exprArr);
-    }
-
-    private static function intoForLoop(input: ArrayView<MToken>, context: Context, parser: MParser): ParserFlowControl {
+    private static function intoForLoop(input: ArrayView<MToken>): ParserFlowControl {
         final min = input[0];
-        input.expect(TKeyword(KFor), context);
-        input.expect(TParentOpen, context);
-        final partsOption = parseForExpressions(input, context, parser);
-        input.expect(TParentClose, context);
-        if (partsOption.isNone()) {
-            return PParseError;
-        }
+        input.expect(TKeyword(KFor));
+        var parentBlock = MParseBlocker.createBlock(input, Some(TParentOpen), TParentClose);
+        parentBlock.expect(TParentOpen);
+        parentBlock.expectBack(TParentClose);
+        final parts = new MParser(parentBlock).expectExprs(3, None);
 
-        var parts = partsOption.unwrap();
-
-        var exprFlowControl = parser.parseNextExpr();
-        var expr = switch exprFlowControl {
-            case PReturnSome(e): e;
-            default: return exprFlowControl;
+        var expr = new MParser(input).parseNextExpr();
+        if (expr == None) {
+            throw new Exception("Expected expression, found void");
         }
+        var expression = expr.unwrap();
         return PReturnSome({
-            kind: MExprKind.EFor(parts[0], parts[1], parts[2], expr),
+            kind: MExprKind.EFor(parts[0], parts[1], parts[2], expression),
             pos: {
                 path: min.pos.path,
                 min: min.pos.min,
-                max: input.previous().pos.max
+                max: expression.pos.max
             },
             type: MType.mono(),
         });
     }
 
-    public static function intoLoop(input: ArrayView<MToken>, context: Context, parser: MParser): ParserFlowControl {
+    public static function intoLoop(input: ArrayView<MToken>): ParserFlowControl {
         if (input.length == 0) {
             throw new Exception("Internal compiler error: Input length was 0");
         }
 
         return switch(input[0].kind) {
             case TKeyword(KDo):
-                intoDoWhileLoop(input, context, parser);
+                intoDoWhileLoop(input);
             case TKeyword(KWhile):
-                intoWhileLoop(input, context, parser);
+                intoWhileLoop(input);
             case TKeyword(KFor):
-                intoForLoop(input, context, parser);
+                intoForLoop(input);
             default:
                 throw new Exception('Expected loop, got ${input[0].kind}');
         }

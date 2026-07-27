@@ -4,9 +4,6 @@ package error;
 class MErrorLocale {
 
     private var _mapping: Map<MErrorKind, String> = [
-        MErrorKind.ParserExpectedSemicolon => "Expected ';' to terminate the statement",
-        MErrorKind.ParserEmptyStatement => "Unexpected ';': empty statements are not allowed",
-
         MErrorKind.TyperUnificationFailed => "Unification failed between #0 and #1",
         MErrorKind.TyperOccursCheckFailed => "Occurs check failed for #0 in #1",
         MErrorKind.TyperInvalidScope => "Internal error : Invalid scope for '#0' in #1!"
